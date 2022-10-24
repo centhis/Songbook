@@ -198,10 +198,50 @@ public class TextSongActivity extends AppCompatActivity {
         return linesBreaks.toArray(new String[linesBreaks.size()]);
     }
 
+    private String[] twoLinesWithBreaks(String lineChords, String lineText, int count){
+        String lineToBreaks = lineText;
+        String lineChordsToBreaks = lineChords;
+        int lineLength = lineToBreaks.length();
+        List<String> linesBreaks = new ArrayList<>();
+        while (count < lineLength){
+            for (int i = count; i > 1; i--){
+                if (lineToBreaks.charAt(i) == ' '){
+                    if (lineChordsToBreaks.length() > i)
+                        linesBreaks.add(lineChordsToBreaks.substring(0, i));
+                    else
+                        linesBreaks.add(" ");
+                    linesBreaks.add(lineToBreaks.substring(0, i));
+                    if (lineChordsToBreaks.length() > i)
+                        lineChordsToBreaks = lineChordsToBreaks.substring(i);
+                    else
+                        lineChordsToBreaks = " ";
+                    lineToBreaks = lineToBreaks.substring(i);
+                    lineLength = lineToBreaks.length();
+                    break;
+                }
+            }
+        }
+        if (lineChordsToBreaks.length() > 0)
+            linesBreaks.add(lineChordsToBreaks);
+        if (lineToBreaks.length() > 0)
+            linesBreaks.add(lineToBreaks);
+        return linesBreaks.toArray(new String[linesBreaks.size()]);
+    }
+
     private void showText(String[] lines, int count){
         for (int i = 0; i < lines.length; i++){
             if (isChordLine(lines[i])){
-
+                if (count + 1 < lines[i].length()){
+                    String[] linesBreaks = twoLinesWithBreaks(lines[i], lines[i+1], count);
+                    for (String line:linesBreaks){
+                        TextView tv = createTextView();
+                        tv.setText(line);
+                    }
+                    i++;
+                } else {
+                    TextView tv = createTextView();
+                    tv.setText(lines[i]);
+                }
             } else {
                 if (count + 1 < lines[i].length()){
                     String[] linesBreaks = lineWithBreaks(lines[i], count);

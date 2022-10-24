@@ -35,9 +35,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import ru.centhis.songbook.R;
+import ru.centhis.songbook.data.Chords;
 import ru.centhis.songbook.data.Item;
 import ru.centhis.songbook.data.Song;
 
@@ -141,7 +144,7 @@ public class TextSongActivity extends AppCompatActivity {
         return tv;
     }
 
-    private int textViewVisibleCharCount(TextView tv){
+    private void textViewVisibleCharCount(TextView tv){
 
         tv.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -153,19 +156,46 @@ public class TextSongActivity extends AppCompatActivity {
             }
 
         });
-        Log.d(TAG, "textViewVisibleCharCount: " + count);
-        return count;
     }
 
     private boolean isChordLine (String line){
-        int spaceCount = 0;
-        for (char c:line.toCharArray()){
-            if (c == ' ')
-                spaceCount++;
+        boolean result = true;
+        line = line.replaceAll("\\p{C}","");
+        line = line.trim();
+        String[] words = line.split(" +");
+        int count = 0;
+        for (String word:words){
+            for (Chords chord:Chords.values()){
+                if (word.equals(chord.toString())){
+                    Log.d(TAG, "isChordLine: " + word);
+                    count++;
+                    //TODO добавить список используемых аккордов
+                    break;
+                }
+            }
         }
-        if (spaceCount > (line.length() / 2))
+        if (count == words.length)
             return true;
         return false;
+    }
+
+    private String[] lineWithBreaks(String line, int count){
+        String lineToBreaks = line;
+        int lineLength = line.length();
+        List<String> linesBreaks = new ArrayList<>();
+        while (count < lineLength){
+            for (int i = count; i > 1; i--){
+                if (lineToBreaks.charAt(i) == ' '){
+                    linesBreaks.add(lineToBreaks.substring(0, i));
+                    lineToBreaks = lineToBreaks.substring(i);
+                    lineLength = lineToBreaks.length();
+                    break;
+                }
+            }
+        }
+        if (lineToBreaks.length() > 0)
+            linesBreaks.add(lineToBreaks);
+        return linesBreaks.toArray(new String[linesBreaks.size()]);
     }
 
     private void showText(String[] lines, int count){
@@ -173,8 +203,20 @@ public class TextSongActivity extends AppCompatActivity {
             if (isChordLine(lines[i])){
 
             } else {
-                TextView textView = createTextView();
-                textView.setText(lines[i]);
+                if (count + 1 < lines[i].length()){
+                    String[] linesBreaks = lineWithBreaks(lines[i], count);
+
+
+                    for (String line:linesBreaks){
+                        TextView tv = createTextView();
+                        tv.setText(line);
+                    }
+
+
+                } else {
+                    TextView tv = createTextView();
+                    tv.setText(lines[i]);
+                }
             }
         }
     }

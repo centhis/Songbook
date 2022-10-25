@@ -7,4 +7,5 @@
     <string name="dbx_text">DropBox</string>
     <string name="loading">Загрузка</string>
     <string name="settings">Настройки</string>
+    <string name="scroll_button">Scroll</string>
 </resources>

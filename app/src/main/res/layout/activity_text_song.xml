@@ -6,10 +6,64 @@
     android:layout_height="match_parent"
     tools:context=".activities.TextSongActivity">
 
+    <LinearLayout
+        android:id="@+id/controlPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/textScrollView"
+        android:gravity="right"
+
+        >
+
+        <ImageButton
+            android:id="@+id/playBtn"
+            android:layout_width="50dp"
+            android:layout_height="match_parent"
+            android:layout_weight="3"
+            app:srcCompat="@drawable/ic_baseline_play_arrow_24" />
+        <ImageButton
+            android:id="@+id/increaseToneBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/ic_baseline_keyboard_arrow_up_24" />
+        <ImageButton
+            android:id="@+id/decreaseToneBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/ic_baseline_keyboard_arrow_down_24" />
+        <ImageButton
+            android:id="@+id/increaseFontBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/ic_baseline_keyboard_arrow_up_24" />
+        <ImageButton
+            android:id="@+id/decreaseFontBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/ic_baseline_keyboard_arrow_down_24" />
+        <ImageButton
+            android:id="@+id/scrollBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="3"
+            app:srcCompat="@drawable/ic_baseline_arrow_downward_24" />
+
+
+
+
+    </LinearLayout>
 
     <ScrollView
+        android:id="@+id/textScrollView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:layout_marginStart="5dp"
         android:layout_marginTop="5dp"
         android:layout_marginEnd="5dp"
@@ -17,7 +71,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/controlPanel">
 
         <LinearLayout
             android:id="@+id/textSongLayout"

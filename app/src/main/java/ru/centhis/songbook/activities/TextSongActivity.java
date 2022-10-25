@@ -9,8 +9,12 @@ import androidx.core.widget.TextViewCompat;
 import android.content.Intent;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Handler;
 import android.text.Html;
 import android.text.Layout;
 import android.text.PrecomputedText;
@@ -21,9 +25,12 @@ import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TableRow;
 import android.widget.TextView;
 
@@ -37,7 +44,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import ru.centhis.songbook.R;
 import ru.centhis.songbook.data.Chords;
@@ -50,12 +60,16 @@ public class TextSongActivity extends AppCompatActivity {
 
     Item itemRoot;
     String file = "text.txt";
+    String mp3File = "song.mp3";
     LinearLayout textSongLayout;
     static int count;
     Song song;
+    ImageButton playBtn;
+    ImageButton scrollBtn;
+    MediaPlayer mediaPlayer;
+    ScrollView sv;
 
 
-    @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     protected void onStart() {
         super.onStart();
@@ -69,6 +83,11 @@ public class TextSongActivity extends AppCompatActivity {
         setContentView(R.layout.activity_text_song);
 
         textSongLayout = findViewById(R.id.textSongLayout);
+        playBtn = findViewById(R.id.playBtn);
+        scrollBtn = findViewById(R.id.scrollBtn);
+        sv = findViewById(R.id.textScrollView);
+
+
 
         if (getIntent().getExtras() != null){
             itemRoot = (Item) getIntent().getSerializableExtra("item");
@@ -76,10 +95,57 @@ public class TextSongActivity extends AppCompatActivity {
         }
         song = new Song(itemRoot.getSource() + "/" + file);
 
+        mediaPlayer = MediaPlayer.create(this, Uri.parse(itemRoot.getSource() + "/" + mp3File));
+
         ActionBar actionBar = this.getSupportActionBar();
         if (actionBar != null){
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+
+        playBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (mediaPlayer.isPlaying()){
+                    mediaPlayer.pause();
+                    playBtn.setImageResource(R.drawable.ic_baseline_play_arrow_24);
+                } else {
+                    mediaPlayer.seekTo(0);
+                    mediaPlayer.start();
+                    playBtn.setImageResource(R.drawable.ic_baseline_stop_24);
+                }
+            }
+        });
+
+        scrollBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int svHeight = sv.getHeight();
+                int duration = mediaPlayer.getDuration();
+
+
+                CountDownTimer countDownTimer = new CountDownTimer(duration, duration / 10000) {
+                    double svPosition = 0;
+                    @Override
+                    public void onTick(long l) {
+                        svPosition = svPosition + (svHeight / 1800.0);
+                        sv.scrollTo(0, (int)svPosition);
+                    }
+
+                    @Override
+                    public void onFinish() {
+
+                    }
+                };
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        countDownTimer.start();
+                    }
+                }, 10000);
+
+            }
+        });
 
     }
 
@@ -167,7 +233,7 @@ public class TextSongActivity extends AppCompatActivity {
         for (String word:words){
             for (Chords chord:Chords.values()){
                 if (word.equals(chord.toString())){
-                    Log.d(TAG, "isChordLine: " + word);
+//                    Log.d(TAG, "isChordLine: " + word);
                     count++;
                     //TODO добавить список используемых аккордов
                     break;

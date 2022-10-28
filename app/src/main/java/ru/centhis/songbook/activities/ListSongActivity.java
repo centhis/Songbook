@@ -23,6 +23,7 @@ import java.util.List;
 import ru.centhis.songbook.R;
 import ru.centhis.songbook.data.Item;
 import ru.centhis.songbook.data.ItemAdapter;
+import ru.centhis.songbook.data.SettingsContract;
 
 public class ListSongActivity extends AppCompatActivity implements ItemAdapter.ViewHolder.OnItemListener{
 
@@ -37,7 +38,7 @@ public class ListSongActivity extends AppCompatActivity implements ItemAdapter.V
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list_song);
 
-        SharedPreferences prefs = getSharedPreferences("ru.centhis.songbook", MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(SettingsContract.APP_NAME, MODE_PRIVATE);
 
         if (getIntent().getExtras() != null){
             itemRoot = (Item) getIntent().getSerializableExtra("item");

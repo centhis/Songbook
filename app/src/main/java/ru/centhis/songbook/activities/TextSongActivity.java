@@ -4,9 +4,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NavUtils;
 import androidx.core.widget.TextViewCompat;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.media.MediaPlayer;
@@ -28,13 +31,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -52,7 +58,9 @@ import java.util.TimerTask;
 import ru.centhis.songbook.R;
 import ru.centhis.songbook.data.Chords;
 import ru.centhis.songbook.data.Item;
+import ru.centhis.songbook.data.SettingsContract;
 import ru.centhis.songbook.data.Song;
+import ru.centhis.songbook.util.MBJsonSharedPrefs;
 
 public class TextSongActivity extends AppCompatActivity {
 
@@ -60,7 +68,8 @@ public class TextSongActivity extends AppCompatActivity {
 
     Item itemRoot;
     String file = "text.txt";
-    String mp3File = "song.mp3";
+    String mp3 = "song.mp3";
+    File mp3File;
     LinearLayout textSongLayout;
     static int count;
     Song song;
@@ -68,6 +77,11 @@ public class TextSongActivity extends AppCompatActivity {
     ImageButton scrollBtn;
     MediaPlayer mediaPlayer;
     ScrollView sv;
+    CountDownTimer scrollCountDownTimer;
+    CountDownTimer startScrollCountDownTimer;
+    SharedPreferences prefs;
+    MBJsonSharedPrefs songPrefs;
+    int fsSong;
 
 
     @Override
@@ -82,20 +96,37 @@ public class TextSongActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_text_song);
 
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         textSongLayout = findViewById(R.id.textSongLayout);
         playBtn = findViewById(R.id.playBtn);
         scrollBtn = findViewById(R.id.scrollBtn);
         sv = findViewById(R.id.textScrollView);
 
-
-
         if (getIntent().getExtras() != null){
             itemRoot = (Item) getIntent().getSerializableExtra("item");
             setTitle(itemRoot.getName());
         }
+
+        songPrefs = new MBJsonSharedPrefs(itemRoot.getSource() + "/songPrefs.json");
+        prefs = getSharedPreferences(SettingsContract.APP_NAME, MODE_PRIVATE);
+
+        mp3File = new File(itemRoot.getSource() + "/" + mp3);
+        if (!mp3File.exists()){
+            playBtn.setClickable(false);
+            playBtn.setEnabled(false);
+            playBtn.setImageAlpha(25);
+
+            scrollBtn.setClickable(false);
+            scrollBtn.setEnabled(false);
+            scrollBtn.setImageAlpha(25);
+        } else {
+            mediaPlayer = MediaPlayer.create(this, Uri.parse(itemRoot.getSource() + "/" + mp3));
+        }
+
         song = new Song(itemRoot.getSource() + "/" + file);
 
-        mediaPlayer = MediaPlayer.create(this, Uri.parse(itemRoot.getSource() + "/" + mp3File));
+
 
         ActionBar actionBar = this.getSupportActionBar();
         if (actionBar != null){
@@ -119,35 +150,63 @@ public class TextSongActivity extends AppCompatActivity {
         scrollBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                int svHeight = sv.getHeight();
-                int duration = mediaPlayer.getDuration();
+
+                if (scrollCountDownTimer != null) {
+                    scrollCountDownTimer.cancel();
+                    scrollCountDownTimer = null;
+                } else {
+
+                    int svHeight = sv.getChildAt(0).getHeight();
+                    int duration = mediaPlayer.getDuration();
+                    int svScreeHeight = sv.getHeight();
 
 
-                CountDownTimer countDownTimer = new CountDownTimer(duration, duration / 10000) {
-                    double svPosition = 0;
-                    @Override
-                    public void onTick(long l) {
-                        svPosition = svPosition + (svHeight / 1800.0);
-                        sv.scrollTo(0, (int)svPosition);
-                    }
+                    scrollCountDownTimer = new CountDownTimer(duration, duration / 10000) {
+                        double svPosition = 0;
 
-                    @Override
-                    public void onFinish() {
+                        @Override
+                        public void onTick(long l) {
+                            svPosition = svPosition + (svHeight / (10000.0 - 3000));
+                            sv.scrollTo(0, (int) svPosition);
+                            if (svPosition > (svHeight - svScreeHeight))
+                                scrollCountDownTimer.cancel();
+                        }
 
-                    }
-                };
-                Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        countDownTimer.start();
-                    }
-                }, 10000);
+                        @Override
+                        public void onFinish() {
 
+                        }
+                    };
+
+                    sv.scrollTo(0, 0);
+
+                    startScrollCountDownTimer = new CountDownTimer(10000, 1000) {
+                        int i = 10;
+                        @Override
+                        public void onTick(long l) {
+                            Toast toast = Toast.makeText(TextSongActivity.this, String.valueOf(i), Toast.LENGTH_SHORT);
+                            toast.show();
+                            try {
+                                Thread.sleep(400);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            toast.cancel();
+                            i--;
+                        }
+
+                        @Override
+                        public void onFinish() {
+                            scrollCountDownTimer.start();
+                        }
+                    };
+                    startScrollCountDownTimer.start();
+                }
             }
         });
 
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -158,27 +217,35 @@ public class TextSongActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings){
-            Intent openSettings = new Intent(this, SettingsActivity.class);
-            startActivity(openSettings);
-            return true;
+
+        switch (item.getItemId()){
+            case android.R.id.home:
+                mediaPlayer.stop();
+                scrollCountDownTimer.cancel();
+//                NavUtils.navigateUpFromSameTask(this);
+                return true;
+            case R.id.action_settings:
+                Intent openSettings = new Intent(this, SettingsActivity.class);
+                startActivity(openSettings);
+                return true;
         }
+
+
+//        int id = item.getItemId();
+//        if (id == R.id.action_settings){
+//            Intent openSettings = new Intent(this, SettingsActivity.class);
+//            startActivity(openSettings);
+//            return true;
+//        }
         return super.onOptionsItemSelected(item);
     }
 
 
     private void setTextSongTextView(){
-
-
         String testLine = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-
         TextView tv =createTextView();
-
         tv.setText(testLine);
-
         textViewVisibleCharCount(tv);
-
     }
 
 

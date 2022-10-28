@@ -8,4 +8,6 @@
     <string name="loading">Загрузка</string>
     <string name="settings">Настройки</string>
     <string name="scroll_button">Scroll</string>
+    <string name="default_song_text_size">Размер шрифта в тексте песни по умочланию</string>
+    <string name="song_settings">Настройки песен</string>
 </resources>

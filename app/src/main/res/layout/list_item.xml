@@ -18,7 +18,8 @@
             android:text="Name"
             android:textSize="30sp"
             android:layout_margin="10dp"
-            android:layout_marginStart="30dp"/>
+            android:layout_marginStart="30dp"
+            android:textColor="@color/black"/>
     </LinearLayout>
 
 

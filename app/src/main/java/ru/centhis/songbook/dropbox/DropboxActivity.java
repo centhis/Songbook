@@ -12,6 +12,8 @@ import com.dropbox.core.oauth.DbxCredential;
 
 import java.util.List;
 
+import ru.centhis.songbook.data.SettingsContract;
+
 public abstract class DropboxActivity extends AppCompatActivity {
 
     private final static boolean USE_SLT = true;
@@ -20,7 +22,7 @@ public abstract class DropboxActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        SharedPreferences prefs = getSharedPreferences("ru.centhis.songbook", MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(SettingsContract.APP_NAME, MODE_PRIVATE);
 
         if (USE_SLT){
             String serializedCredential = prefs.getString("credential", null);
@@ -72,7 +74,7 @@ public abstract class DropboxActivity extends AppCompatActivity {
     protected abstract void loadData();
 
     protected boolean hasToken(){
-        SharedPreferences prefs = getSharedPreferences("ru.centhis.songbook", MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(SettingsContract.APP_NAME, MODE_PRIVATE);
         if (USE_SLT){
             return prefs.getString("credential", null) != null;
         } else {
@@ -81,7 +83,6 @@ public abstract class DropboxActivity extends AppCompatActivity {
         }
     }
     public static void startOAuth2Authentication(Context context, String app_key, List<String> scope) {
-        Log.d("SB-file", "dropboxactivity startOAuth2Authentication");
         if (USE_SLT)
             Auth.startOAuth2PKCE(context, app_key, DbxRequestConfigFactory.getRequestConfig(), scope);
         else

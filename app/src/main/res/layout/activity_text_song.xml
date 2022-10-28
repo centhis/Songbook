@@ -29,25 +29,25 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            app:srcCompat="@drawable/ic_baseline_keyboard_arrow_up_24" />
+            app:srcCompat="@drawable/ic_baseline_keyboard_arrow_down_24" />
         <ImageButton
             android:id="@+id/decreaseToneBtn"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            app:srcCompat="@drawable/ic_baseline_keyboard_arrow_down_24" />
+            app:srcCompat="@drawable/ic_baseline_keyboard_arrow_up_24" />
         <ImageButton
             android:id="@+id/increaseFontBtn"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            app:srcCompat="@drawable/ic_baseline_keyboard_arrow_up_24" />
+            app:srcCompat="@drawable/decrease_font_24" />
         <ImageButton
             android:id="@+id/decreaseFontBtn"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            app:srcCompat="@drawable/ic_baseline_keyboard_arrow_down_24" />
+            app:srcCompat="@drawable/increase_font_24" />
         <ImageButton
             android:id="@+id/scrollBtn"
             android:layout_width="wrap_content"

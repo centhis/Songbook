@@ -46,15 +46,14 @@ public class UploadFileTask extends AsyncTask<String, Void, FileMetadata> {
     @Override
     protected FileMetadata doInBackground(String... strings) {
         String localUri = strings[0];
-        File localFile = UriHelpers.getFileForUri(mContext, Uri.parse(localUri));
+//        File localFile = UriHelpers.getFileForUri(mContext, Uri.parse(localUri));
+        File localFile = new File(localUri);
 
         if (localFile != null){
             String remoteFolderPath = strings[1];
 
-            String remoteFileName = localFile.getName();
-
             try (InputStream inputStream = new FileInputStream(localFile)){
-                return mDbxClient.files().uploadBuilder(remoteFolderPath + "/" + remoteFileName).
+                return mDbxClient.files().uploadBuilder(remoteFolderPath).
                         withMode(WriteMode.OVERWRITE).uploadAndFinish(inputStream);
             } catch (DbxException | IOException e){
                 mException = e;

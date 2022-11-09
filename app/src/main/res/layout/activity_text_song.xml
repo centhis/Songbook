@@ -37,13 +37,13 @@
             android:layout_weight="1"
             app:srcCompat="@drawable/ic_baseline_keyboard_arrow_up_24" />
         <ImageButton
-            android:id="@+id/increaseFontBtn"
+            android:id="@+id/fsDownBtn"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
             app:srcCompat="@drawable/decrease_font_24" />
         <ImageButton
-            android:id="@+id/decreaseFontBtn"
+            android:id="@+id/fsUpBtn"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"

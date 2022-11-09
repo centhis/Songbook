@@ -20,26 +20,37 @@
         android:theme="@style/Theme.Songbook"
         tools:targetApi="31">
         <activity
+            android:name=".activities.SettingsSongActivity"
+            android:exported="false"
+            android:parentActivityName=".activities.TextSongActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.TextSongActivity" />
+        </activity>
+        <activity
             android:name=".activities.TextSongActivity"
             android:exported="false"
             android:parentActivityName=".activities.ListSongActivity">
-            <meta-data android:name="android.support.PARENT_ACTIVITY"
-                android:value=".activities.ListSongActivity"/>
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.ListSongActivity" />
         </activity>
         <activity
             android:name=".activities.ListSongActivity"
             android:exported="false"
             android:parentActivityName=".activities.MainActivity">
-            <meta-data android:name="android.support.PARENT_ACTIVITY"
-                android:value=".activities.MainActivity"/>
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.MainActivity" />
         </activity>
         <activity
             android:name=".activities.SettingsActivity"
             android:exported="false"
             android:label="@string/settings"
             android:parentActivityName=".activities.MainActivity">
-            <meta-data android:name="android.support.PARENT_ACTIVITY"
-                android:value=".activities.MainActivity"/>
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.MainActivity" />
         </activity>
         <activity
             android:name=".activities.MainActivity"

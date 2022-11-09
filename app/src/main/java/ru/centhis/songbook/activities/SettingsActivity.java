@@ -18,7 +18,6 @@ import androidx.appcompat.app.ActionBar;
 import com.dropbox.core.v2.users.FullAccount;
 
 import java.io.File;
-import java.util.Arrays;
 
 import ru.centhis.songbook.R;
 import ru.centhis.songbook.data.SettingsContract;
@@ -84,8 +83,8 @@ public class SettingsActivity extends DropboxActivity {
             public void onClick(View view) {
                 int i = Integer.parseInt(fsSongTV.getText().toString());
                 i++;
-                if (i > 30)
-                    i = 30;
+                if (i > SettingsContract.FS_SONG_MAX)
+                    i = SettingsContract.FS_SONG_MAX;
                 String result;
                 if (i > 9)
                     result = String.valueOf(i);
@@ -100,8 +99,8 @@ public class SettingsActivity extends DropboxActivity {
             public void onClick(View view) {
                 int i = Integer.parseInt(fsSongTV.getText().toString());
                 i--;
-                if (i < 6)
-                    i = 6;
+                if (i < SettingsContract.FS_SONG_MIN)
+                    i = SettingsContract.FS_SONG_MIN;
                 String result;
                 if (i > 9)
                     result = String.valueOf(i);

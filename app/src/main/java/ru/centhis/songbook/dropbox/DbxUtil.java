@@ -12,6 +12,7 @@ import com.dropbox.core.v2.files.ListFolderResult;
 import com.dropbox.core.v2.files.Metadata;
 import com.fasterxml.jackson.core.JsonParser;
 
+import org.apache.commons.io.FilenameUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -40,6 +41,7 @@ public final class DbxUtil {
 
     private static List<String> folderPaths = new ArrayList<>();
     private static List<String> filesPath = new ArrayList<>();
+    private static List<File> localFiles = new ArrayList<>();
 
     public static void dbxSyncFiles(Context context, String filesDir){
         final ProgressDialog dialog = new ProgressDialog(context);
@@ -64,6 +66,7 @@ public final class DbxUtil {
     }
 
     private static void listFolders(String path, Context context, String filesDir){
+        listLocalFiles(filesDir, localFiles);
         new ListFolderTask(DropboxClientFactory.getClient(), new ListFolderTask.Callback() {
             @Override
             public void onDataLoaded(ListFolderResult result) {
@@ -82,6 +85,16 @@ public final class DbxUtil {
                         Log.e(TAG, "Something wrong with JSON answer.", e);
                     }
                 }
+                for (File localFile:localFiles){
+                    String remoteFilePath = localFile.getAbsolutePath().substring(filesDir.length());
+                    boolean isFileExistOnDBX = true;
+                    for (Metadata entry : result.getEntries()){
+                        if (!entry.getPathDisplay().equals(remoteFilePath))
+                            isFileExistOnDBX = false;
+                    }
+                    if (!isFileExistOnDBX)
+                        uploadFile(context, localFile.getAbsolutePath(), remoteFilePath);
+                }
                 threadCounter--;
             }
 
@@ -92,6 +105,8 @@ public final class DbxUtil {
                 Toast.makeText(context, "An error has occured", Toast.LENGTH_SHORT).show();
             }
         }).execute(path);
+
+
     }
 
     private static void syncFile(String storagePath, Context context, FileMetadata fileMetadata){
@@ -104,12 +119,13 @@ public final class DbxUtil {
             }
             if (file.length() != fileMetadata.getSize()){
                 int compareValue = Long.compare(file.lastModified(), fileMetadata.getServerModified().getTime());
-                if (compareValue > 0){
+                if (compareValue < 0){
                     downloadFile(context, fileMetadata);
-                } else if (compareValue < 0){
+                } else if (compareValue > 0){
                     uploadFile(context, filePath, fileMetadata.getPathLower());
                 }
             }
+
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -147,5 +163,19 @@ public final class DbxUtil {
                 Toast.makeText(context, "An error has occured", Toast.LENGTH_LONG).show();
             }
         }).execute(fileUri, remotePath);
+    }
+
+    private static void listLocalFiles(String localPath, List<File> files){
+        File directory = new File(localPath);
+        File[] fList = directory.listFiles();
+        if (fList != null){
+            for (File file:fList){
+                if (file.isFile() && FilenameUtils.getExtension(file.getName()).equals("json"))
+                    files.add(file);
+                else if (file.isDirectory()){
+                    listLocalFiles(file.getAbsolutePath(), files);
+                }
+            }
+        }
     }
 }

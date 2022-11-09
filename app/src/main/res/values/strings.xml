@@ -9,5 +9,9 @@
     <string name="settings">Настройки</string>
     <string name="scroll_button">Scroll</string>
     <string name="default_song_text_size">Размер шрифта в тексте песни по умочланию</string>
-    <string name="song_settings">Настройки песен</string>
+    <string name="songs_settings">Настройки песен</string>
+    <string name="song_settings">Настройки песни</string>
+    <string name="song_text_size">Размер шрифта в тексте песни</string>
+    <string name="song_scroll_speed">Корректировка скорости прокрутки</string>
+    <string name="song_scroll_count_down">Задержка прокрутки, сек</string>
 </resources>

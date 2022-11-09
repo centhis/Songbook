@@ -75,6 +75,8 @@ public class TextSongActivity extends AppCompatActivity {
     Song song;
     ImageButton playBtn;
     ImageButton scrollBtn;
+    ImageButton fsUpBtn;
+    ImageButton fsDownBtn;
     MediaPlayer mediaPlayer;
     ScrollView sv;
     CountDownTimer scrollCountDownTimer;
@@ -82,6 +84,8 @@ public class TextSongActivity extends AppCompatActivity {
     SharedPreferences prefs;
     MBJsonSharedPrefs songPrefs;
     int fsSong;
+
+    ViewTreeObserver.OnGlobalLayoutListener listener;
 
 
     @Override
@@ -102,6 +106,9 @@ public class TextSongActivity extends AppCompatActivity {
         playBtn = findViewById(R.id.playBtn);
         scrollBtn = findViewById(R.id.scrollBtn);
         sv = findViewById(R.id.textScrollView);
+        fsUpBtn = findViewById(R.id.fsUpBtn);
+        fsDownBtn = findViewById(R.id.fsDownBtn);
+
 
         if (getIntent().getExtras() != null){
             itemRoot = (Item) getIntent().getSerializableExtra("item");
@@ -110,6 +117,11 @@ public class TextSongActivity extends AppCompatActivity {
 
         songPrefs = new MBJsonSharedPrefs(itemRoot.getSource() + "/songPrefs.json");
         prefs = getSharedPreferences(SettingsContract.APP_NAME, MODE_PRIVATE);
+
+        fsSong = prefs.getInt(SettingsContract.FS_SONG, SettingsContract.FS_SONG_MIN);
+        int fsSongLocal = songPrefs.getInt(SettingsContract.FS_SONG, 0);
+        if (fsSongLocal != 0)
+            fsSong = fsSongLocal;
 
         mp3File = new File(itemRoot.getSource() + "/" + mp3);
         if (!mp3File.exists()){
@@ -151,10 +163,15 @@ public class TextSongActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                if (scrollCountDownTimer != null) {
-                    scrollCountDownTimer.cancel();
+                if (scrollCountDownTimer != null || startScrollCountDownTimer != null) {
+                    if (scrollCountDownTimer != null)
+                        scrollCountDownTimer.cancel();
                     scrollCountDownTimer = null;
-                } else {
+                    if (startScrollCountDownTimer != null)
+                        startScrollCountDownTimer.cancel();
+                    startScrollCountDownTimer = null;
+                }
+                else {
 
                     int svHeight = sv.getChildAt(0).getHeight();
                     int duration = mediaPlayer.getDuration();
@@ -166,7 +183,8 @@ public class TextSongActivity extends AppCompatActivity {
 
                         @Override
                         public void onTick(long l) {
-                            svPosition = svPosition + (svHeight / (10000.0 - 3000));
+                            int scrollSpeed = songPrefs.getInt(SettingsContract.SCROLL_SONG, 0);
+                            svPosition = svPosition + (svHeight / (10000.0 - (scrollSpeed * 1000)));
                             sv.scrollTo(0, (int) svPosition);
                             if (svPosition > (svHeight - svScreeHeight))
                                 scrollCountDownTimer.cancel();
@@ -180,8 +198,13 @@ public class TextSongActivity extends AppCompatActivity {
 
                     sv.scrollTo(0, 0);
 
-                    startScrollCountDownTimer = new CountDownTimer(10000, 1000) {
-                        int i = 10;
+
+                    int scrollCountDown = songPrefs.getInt(SettingsContract.SCROLL_COUNTDOWN, 0);
+                    if (scrollCountDown == 0)
+                        scrollCountDown = prefs.getInt(SettingsContract.SCROLL_COUNTDOWN, SettingsContract.DEFAULT_SCROLL_COUNTDOWN);
+                    int finalScrollCountDown = scrollCountDown;
+                    startScrollCountDownTimer = new CountDownTimer(finalScrollCountDown * 1000, 1000) {
+                        int i = finalScrollCountDown;
                         @Override
                         public void onTick(long l) {
                             Toast toast = Toast.makeText(TextSongActivity.this, String.valueOf(i), Toast.LENGTH_SHORT);
@@ -205,6 +228,27 @@ public class TextSongActivity extends AppCompatActivity {
             }
         });
 
+        fsUpBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                fsSong++;
+                songPrefs.putInt(SettingsContract.FS_SONG, fsSong);
+                songPrefs.apply();
+                textSongLayout.removeAllViews();
+                setTextSongTextView();
+            }
+        });
+
+        fsDownBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                fsSong--;
+                songPrefs.putInt(SettingsContract.FS_SONG, fsSong);
+                songPrefs.apply();
+                textSongLayout.removeAllViews();
+                setTextSongTextView();
+            }
+        });
     }
 
 
@@ -220,12 +264,33 @@ public class TextSongActivity extends AppCompatActivity {
 
         switch (item.getItemId()){
             case android.R.id.home:
-                mediaPlayer.stop();
-                scrollCountDownTimer.cancel();
+                if (mediaPlayer != null)
+                    mediaPlayer.stop();
+                if (scrollCountDownTimer != null) {
+                    scrollCountDownTimer.cancel();
+                    scrollCountDownTimer = null;
+                }
+                if (startScrollCountDownTimer != null) {
+                    startScrollCountDownTimer.cancel();
+                    startScrollCountDownTimer = null;
+                }
 //                NavUtils.navigateUpFromSameTask(this);
+                Intent backIntent = new Intent(this, ListSongActivity.class);
+                startActivity(backIntent);
                 return true;
             case R.id.action_settings:
-                Intent openSettings = new Intent(this, SettingsActivity.class);
+                if (mediaPlayer != null)
+                    mediaPlayer.stop();
+                if (scrollCountDownTimer != null) {
+                    scrollCountDownTimer.cancel();
+                    scrollCountDownTimer = null;
+                }
+                if (startScrollCountDownTimer != null) {
+                    startScrollCountDownTimer.cancel();
+                    startScrollCountDownTimer = null;
+                }
+                Intent openSettings = new Intent(this, SettingsSongActivity.class);
+                openSettings.putExtra("item", itemRoot);
                 startActivity(openSettings);
                 return true;
         }
@@ -270,7 +335,7 @@ public class TextSongActivity extends AppCompatActivity {
         lparams.setMarginEnd(10);
         TextView tv=new TextView(this);
         tv.setLayoutParams(lparams);
-        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, fsSong);
         tv.setTypeface(Typeface.MONOSPACE);
         this.textSongLayout.addView(tv);
         tv.setMaxLines(1);
@@ -332,6 +397,26 @@ public class TextSongActivity extends AppCompatActivity {
     }
 
     private String[] twoLinesWithBreaks(String lineChords, String lineText, int count){
+//        int textCount = 0;
+//        List<String> strings = new ArrayList();
+//        if (lineText.length() > count){
+//            for (int i = lineText.length()-1; i > 1; i--){
+//                if (lineText.charAt(i) == ' ' && i < count){
+//                    textCount = i;
+//                    break;
+//                }
+//            }
+//        }
+//        strings.add(lineChords.substring(0, textCount));
+//        Log.d(TAG, "twoLinesWithBreaks: " + lineChords.substring(0, textCount));
+//        strings.add(lineText.substring(0, textCount));
+//        Log.d(TAG, "twoLinesWithBreaks: " + lineText.substring(0, textCount));
+//        strings.add(lineChords.substring(textCount));
+//        Log.d(TAG, "twoLinesWithBreaks: " + lineChords.substring(textCount));
+//        strings.add(lineText.substring(textCount));
+//        Log.d(TAG, "twoLinesWithBreaks: " + lineText.substring(textCount));
+//        return strings.toArray(new String[strings.size()]);
+
         String lineToBreaks = lineText;
         String lineChordsToBreaks = lineChords;
         int lineLength = lineToBreaks.length();
@@ -359,12 +444,13 @@ public class TextSongActivity extends AppCompatActivity {
         if (lineToBreaks.length() > 0)
             linesBreaks.add(lineToBreaks);
         return linesBreaks.toArray(new String[linesBreaks.size()]);
+
     }
 
     private void showText(String[] lines, int count){
         for (int i = 0; i < lines.length; i++){
             if (isChordLine(lines[i])){
-                if (count + 1 < lines[i].length()){
+                if (count + 1 < lines[i + 1].length()){
                     String[] linesBreaks = twoLinesWithBreaks(lines[i], lines[i+1], count);
                     for (String line:linesBreaks){
                         TextView tv = createTextView();

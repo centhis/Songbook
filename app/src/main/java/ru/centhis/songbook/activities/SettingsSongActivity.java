@@ -21,17 +21,21 @@ public class SettingsSongActivity extends AppCompatActivity {
     TextView fsSongTV;
     TextView scrollSongTV;
     TextView scrollCountDownTV;
+    TextView toneTV;
     SharedPreferences prefs;
     MBJsonSharedPrefs songPrefs;
     int fsSong;
     int scrollSong;
     int scrollCountDown;
+    int tone;
     ImageButton fsSongUpBtn;
     ImageButton fsSongDownBtn;
     ImageButton scrollSongUpBtn;
     ImageButton scrollSongDownBtn;
     ImageButton scrollCountDownUpBtn;
     ImageButton scrollCountDownDownBtn;
+    ImageButton toneUpBtn;
+    ImageButton toneDownBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +70,10 @@ public class SettingsSongActivity extends AppCompatActivity {
             scrollCountDown = prefs.getInt(SettingsContract.SCROLL_COUNTDOWN, SettingsContract.DEFAULT_SCROLL_COUNTDOWN);
         scrollCountDownTV = findViewById(R.id.scrollCountDownTV);
         scrollCountDownTV.setText(String.valueOf(scrollCountDown));
+
+        tone = songPrefs.getInt(SettingsContract.TRANSPOND_SONG, 0);
+        toneTV = findViewById(R.id.toneTV);
+        toneTV.setText(String.valueOf(tone));
 
         fsSongDownBtn = findViewById(R.id.fsSongDownBtn);
         fsSongDownBtn.setOnClickListener(new View.OnClickListener() {
@@ -148,6 +156,31 @@ public class SettingsSongActivity extends AppCompatActivity {
                     scrollCountDown = SettingsContract.SCROLL_COUNTDOWN_MAX;
                 scrollCountDownTV.setText(String.valueOf(scrollCountDown));
                 songPrefs.putInt(SettingsContract.SCROLL_COUNTDOWN, scrollCountDown);
+                songPrefs.apply();
+            }
+        });
+
+        toneDownBtn = findViewById(R.id.toneDownBtn);
+        toneDownBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                tone--;
+                if (tone < SettingsContract.TRANSPOND_MIN)
+                    tone = SettingsContract.TRANSPOND_MIN;
+                toneTV.setText(String.valueOf(tone));
+                songPrefs.putInt(SettingsContract.TRANSPOND_SONG, tone);
+                songPrefs.apply();
+            }
+        });
+        toneUpBtn = findViewById(R.id.toneUpBtn);
+        toneUpBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                tone++;
+                if (tone > SettingsContract.TRANSPOND_MAX)
+                    tone = SettingsContract.TRANSPOND_MAX;
+                toneTV.setText(String.valueOf(tone));
+                songPrefs.putInt(SettingsContract.TRANSPOND_SONG, tone);
                 songPrefs.apply();
             }
         });

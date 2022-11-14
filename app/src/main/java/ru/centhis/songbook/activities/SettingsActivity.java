@@ -35,6 +35,10 @@ public class SettingsActivity extends DropboxActivity {
     ImageButton fsSongDownBtn;
     TextView fsSongTV;
     SharedPreferences prefs;
+    int defaultScrollCountDown;
+    TextView defaultScrollCountDownTV;
+    ImageButton defaultScrollCountDownDownBtn;
+    ImageButton defaultScrollCountDownUpBtn;
 
 
 
@@ -108,6 +112,32 @@ public class SettingsActivity extends DropboxActivity {
                     result = "0"+i;
                 fsSongTV.setText(result);
                 prefs.edit().putInt(SettingsContract.FS_SONG, i).apply();
+            }
+        });
+
+        defaultScrollCountDown = prefs.getInt(SettingsContract.SCROLL_COUNTDOWN, SettingsContract.DEFAULT_SCROLL_COUNTDOWN);
+        defaultScrollCountDownTV = findViewById(R.id.defaultScrollCountDownTV);
+        defaultScrollCountDownTV.setText(String.valueOf(defaultScrollCountDown));
+        defaultScrollCountDownDownBtn = findViewById(R.id.defaultScrollCountDownDownBtn);
+        defaultScrollCountDownDownBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                defaultScrollCountDown--;
+                if (defaultScrollCountDown < SettingsContract.SCROLL_COUNTDOWN_MIN)
+                    defaultScrollCountDown = SettingsContract.SCROLL_COUNTDOWN_MIN;
+                defaultScrollCountDownTV.setText(String.valueOf(defaultScrollCountDown));
+                prefs.edit().putInt(SettingsContract.SCROLL_COUNTDOWN, defaultScrollCountDown).apply();
+            }
+        });
+        defaultScrollCountDownUpBtn = findViewById(R.id.defaultScrollCountDownUpBtn);
+        defaultScrollCountDownUpBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                defaultScrollCountDown++;
+                if (defaultScrollCountDown > SettingsContract.SCROLL_COUNTDOWN_MAX)
+                    defaultScrollCountDown = SettingsContract.SCROLL_COUNTDOWN_MAX;
+                defaultScrollCountDownTV.setText(String.valueOf(defaultScrollCountDown));
+                prefs.edit().putInt(SettingsContract.SCROLL_COUNTDOWN, defaultScrollCountDown).apply();
             }
         });
 

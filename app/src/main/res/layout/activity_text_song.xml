@@ -25,13 +25,13 @@
             android:layout_weight="3"
             app:srcCompat="@drawable/ic_baseline_play_arrow_24" />
         <ImageButton
-            android:id="@+id/increaseToneBtn"
+            android:id="@+id/decreaseToneBtn"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
             app:srcCompat="@drawable/ic_baseline_keyboard_arrow_down_24" />
         <ImageButton
-            android:id="@+id/decreaseToneBtn"
+            android:id="@+id/increaseToneBtn"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"

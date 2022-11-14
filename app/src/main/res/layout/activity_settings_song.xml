@@ -182,12 +182,60 @@
                 android:src="@drawable/ic_baseline_keyboard_arrow_up_24"
                 android:layout_weight="1"/>
         </LinearLayout>
-
-
-
-
-
     </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:weightSum="4"
+        android:layout_margin="8dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="2"
+            android:orientation="vertical"
+            android:layout_gravity="center">
+            <TextView
+                android:id="@+id/toneTextView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/tone"
+                android:layout_marginEnd="20dp"
+                android:textSize="16sp"
+                android:gravity="center"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="2"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:weightSum="3">
+            <ImageButton
+                android:id="@+id/toneDownBtn"
+                android:layout_width="25dp"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_baseline_keyboard_arrow_down_24"
+                android:layout_weight="1"/>
+            <TextView
+                android:id="@+id/toneTV"
+                android:layout_width="25dp"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textSize="20sp"
+                android:layout_margin="2dp"
+                android:layout_weight="1"
+                android:singleLine="true"
+                android:gravity="center"/>
+            <ImageButton
+                android:id="@+id/toneUpBtn"
+                android:layout_width="25dp"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_baseline_keyboard_arrow_up_24"
+                android:layout_weight="1"/>
+        </LinearLayout>
+    </LinearLayout>
+
 
 
 

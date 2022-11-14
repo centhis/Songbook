@@ -14,4 +14,10 @@
     <string name="song_text_size">Размер шрифта в тексте песни</string>
     <string name="song_scroll_speed">Корректировка скорости прокрутки</string>
     <string name="song_scroll_count_down">Задержка прокрутки, сек</string>
+    <string name="edit">Редактировать</string>
+    <string name="editing">Редактирование</string>
+    <string name="save_question">Сохранить?</string>
+    <string name="yes">Да</string>
+    <string name="cancel">Отмена</string>
+    <string name="tone">Тональность</string>
 </resources>

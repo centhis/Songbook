@@ -3,7 +3,9 @@ package ru.centhis.songbook.data;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +33,19 @@ public class Song {
 
     public String[] getSongText() {
         return songText;
+    }
+
+    public void saveToFile(String[] lines, String path){
+        try (FileWriter fileWriter = new FileWriter(path);
+             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)){
+            for (String line:lines){
+                bufferedWriter.write(line);
+                bufferedWriter.newLine();
+            }
+            bufferedWriter.flush();
+        } catch (Exception e){
+            Log.e(TAG, "saveToFile: ", e);
+        }
     }
 }
 

@@ -118,7 +118,7 @@ public class MBJsonSharedPrefs implements IPreferences{
         try {
             return (String)mJSONObject.get(key);
         } catch (JSONException e){
-            Log.e(TAG, "getContentByKey: ", e);
+//            Log.e(TAG, "getContentByKey: ", e);
             return null;
         }
     }

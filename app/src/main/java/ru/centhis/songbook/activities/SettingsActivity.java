@@ -9,15 +9,19 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.widget.SwitchCompat;
 
 import com.dropbox.core.v2.users.FullAccount;
 
 import java.io.File;
+import java.io.IOException;
 
 import ru.centhis.songbook.R;
 import ru.centhis.songbook.data.SettingsContract;
@@ -25,11 +29,12 @@ import ru.centhis.songbook.dropbox.DbxUtil;
 import ru.centhis.songbook.dropbox.DropboxActivity;
 import ru.centhis.songbook.dropbox.DropboxClientFactory;
 import ru.centhis.songbook.dropbox.GetCurrentAccountTask;
+import ru.centhis.songbook.util.DeleteSongUtil;
 
 
 public class SettingsActivity extends DropboxActivity {
 
-    private static File filesDir;
+    private static final String TAG = MainActivity.class.getName();
 
     ImageButton fsSongUpBtn;
     ImageButton fsSongDownBtn;
@@ -39,6 +44,8 @@ public class SettingsActivity extends DropboxActivity {
     TextView defaultScrollCountDownTV;
     ImageButton defaultScrollCountDownDownBtn;
     ImageButton defaultScrollCountDownUpBtn;
+    SwitchCompat showChordSwitch;
+    Button settingsClearCacheBtn;
 
 
 
@@ -51,7 +58,8 @@ public class SettingsActivity extends DropboxActivity {
         if (actionBar != null)
             actionBar.setDisplayHomeAsUpEnabled(true);
 
-        filesDir = new File(getFilesDir() + "/songs");
+
+
 
         Button dbxButton = findViewById(R.id.dbxButton);
         fsSongUpBtn = findViewById(R.id.fsSongUpBtn);
@@ -65,7 +73,7 @@ public class SettingsActivity extends DropboxActivity {
                 if (dbxButton.getText().equals(getString(R.string.dbx_button_login)))
                     DropboxActivity.startOAuth2Authentication(SettingsActivity.this, getString(R.string.APP_KEY), null);
                 else if (dbxButton.getText().equals(getString(R.string.dbx_button_sync))){
-                    DbxUtil.dbxSyncFiles(SettingsActivity.this, getFilesDir().toString());
+                    DbxUtil.dbxSyncFiles(SettingsActivity.this, getFilesDir().toString(), prefs);
                 }
             }
         });
@@ -141,6 +149,33 @@ public class SettingsActivity extends DropboxActivity {
             }
         });
 
+        showChordSwitch = findViewById(R.id.defaultShowChordSwitch);
+        showChordSwitch.setChecked(prefs.getBoolean(SettingsContract.SHOW_CHORDS, Boolean.FALSE));
+        showChordSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                prefs.edit().putBoolean(SettingsContract.SHOW_CHORDS, b).apply();
+            }
+        });
+
+        TextView settingsPathTV = findViewById(R.id.settingsPathTV);
+        settingsPathTV.setText(getFilesDir().toString());
+
+        settingsClearCacheBtn = findViewById(R.id.settingsClearCacheBtn);
+        settingsClearCacheBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    DeleteSongUtil.deleteCache(getFilesDir().toString());
+                    Toast.makeText(SettingsActivity.this, "Cache cleared", Toast.LENGTH_LONG).show();
+                } catch (IOException e){
+                    Log.e(TAG, "clearCache: ", e);
+                    Toast.makeText(SettingsActivity.this, "Something wrong", Toast.LENGTH_LONG).show();
+                }
+
+            }
+        });
+
     }
 
     @Override
@@ -189,9 +224,7 @@ public class SettingsActivity extends DropboxActivity {
     }
 
 
-    public static File getFilesDirMethod(){
-        return filesDir;
-    }
+
 
 
 }

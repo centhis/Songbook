@@ -2,6 +2,8 @@ package ru.centhis.songbook.activities;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
+
 import ru.centhis.songbook.R;
 import ru.centhis.songbook.data.Item;
 import ru.centhis.songbook.data.SettingsContract;
@@ -12,6 +14,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -36,6 +39,7 @@ public class SettingsSongActivity extends AppCompatActivity {
     ImageButton scrollCountDownDownBtn;
     ImageButton toneUpBtn;
     ImageButton toneDownBtn;
+    SwitchCompat showChordSwitch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -182,6 +186,15 @@ public class SettingsSongActivity extends AppCompatActivity {
                 toneTV.setText(String.valueOf(tone));
                 songPrefs.putInt(SettingsContract.TRANSPOND_SONG, tone);
                 songPrefs.apply();
+            }
+        });
+
+        showChordSwitch = findViewById(R.id.showChordSwitch);
+        showChordSwitch.setChecked(prefs.getBoolean(SettingsContract.SHOW_CHORDS, Boolean.FALSE));
+        showChordSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                prefs.edit().putBoolean(SettingsContract.SHOW_CHORDS, b).apply();
             }
         });
 

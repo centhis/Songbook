@@ -2,11 +2,13 @@ package ru.centhis.songbook.dropbox;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.dropbox.core.v2.files.DeleteResult;
 import com.dropbox.core.v2.files.FileMetadata;
 import com.dropbox.core.v2.files.ListFolderResult;
 import com.dropbox.core.v2.files.Metadata;
@@ -23,12 +25,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import ru.centhis.songbook.R;
 import ru.centhis.songbook.activities.SettingsActivity;
+import ru.centhis.songbook.data.SettingsContract;
 
 public final class DbxUtil {
 
@@ -43,22 +48,32 @@ public final class DbxUtil {
     private static List<String> filesPath = new ArrayList<>();
     private static List<File> localFiles = new ArrayList<>();
 
-    public static void dbxSyncFiles(Context context, String filesDir){
+    public static void dbxSyncFiles(Context context, String filesDir, SharedPreferences prefs){
         final ProgressDialog dialog = new ProgressDialog(context);
         dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         dialog.setCancelable(false);
-        dialog.setMessage("Loading");
+        dialog.setMessage(context.getString(R.string.loading));
         dialog.show();
         threadCounter = 1;
-        listFolders("", context, filesDir + "/songs");
-
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
+        Timer timer1 = new Timer();
+        deleteDBXFiles(context, prefs);
+        timer1.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (threadCounter == 1) {
+//                    listFolders("", context, filesDir + "/songs");
+                    listFolders("", context, filesDir);
+                    timer1.cancel();
+                }
+            }
+        }, 0, 500);
+        Timer timer2 = new Timer();
+        timer2.schedule(new TimerTask() {
             @Override
             public void run() {
                 if (threadCounter == 0){
                     dialog.dismiss();
-                    timer.cancel();
+                    timer2.cancel();
                 }
             }
         },0 , 500);
@@ -87,10 +102,12 @@ public final class DbxUtil {
                 }
                 for (File localFile:localFiles){
                     String remoteFilePath = localFile.getAbsolutePath().substring(filesDir.length());
-                    boolean isFileExistOnDBX = true;
+                    boolean isFileExistOnDBX = false;
                     for (Metadata entry : result.getEntries()){
-                        if (!entry.getPathDisplay().equals(remoteFilePath))
-                            isFileExistOnDBX = false;
+                        if (entry.getPathDisplay().equals(remoteFilePath)) {
+                            isFileExistOnDBX = true;
+                            break;
+                        }
                     }
                     if (!isFileExistOnDBX)
                         uploadFile(context, localFile.getAbsolutePath(), remoteFilePath);
@@ -170,11 +187,47 @@ public final class DbxUtil {
         File[] fList = directory.listFiles();
         if (fList != null){
             for (File file:fList){
-                if (file.isFile() && FilenameUtils.getExtension(file.getName()).equals("json"))
+//                if (file.isFile() && FilenameUtils.getExtension(file.getName()).equals("json"))
+                  if (file.isFile())
                     files.add(file);
                 else if (file.isDirectory()){
                     listLocalFiles(file.getAbsolutePath(), files);
                 }
+            }
+        }
+    }
+
+    private static void deleteDBXFiles(Context context, SharedPreferences prefs){
+        String songsToDelete = prefs.getString(SettingsContract.SONGS_TO_DELETE, "");
+        if (!songsToDelete.equals("")){
+            List<String> songs = Arrays.asList(songsToDelete.split(";"));
+            List<String> songsToPrefs = new ArrayList<>();
+            for (String song:songs)
+                songsToPrefs.add(song);
+            for (String song:songs){
+                threadCounter++;
+                String songToDelDBX = "songs/" + song;
+                new DeleteFileTask(context, DropboxClientFactory.getClient(), new DeleteFileTask.Callback(){
+
+                    @Override
+                    public void onDeleteComplete(DeleteResult result) {
+                        threadCounter--;
+                        for (int i = 0; i < songsToPrefs.size(); i++){
+                            if (songsToPrefs.get(i).equals(song)) {
+                                songsToPrefs.remove(i);
+                                break;
+                            }
+                        }
+                        String prefsString = String.join(";", songsToPrefs);
+                        prefs.edit().putString(SettingsContract.SONGS_TO_DELETE, prefsString).apply();
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.e(TAG, "onError: Failed to delete file", e);
+                        threadCounter--;
+                    }
+                }).execute(songToDelDBX);
             }
         }
     }

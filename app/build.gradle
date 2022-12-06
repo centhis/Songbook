@@ -54,4 +54,5 @@ dependencies {
     api 'com.squareup.okhttp3:okhttp:4.4.0'
 //    implementation 'us.feras.mdv:markdownview:1.1.0'
     implementation 'commons-io:commons-io:2.6'
+    implementation 'org.jsoup:jsoup:1.15.3'
 }

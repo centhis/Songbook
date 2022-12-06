@@ -2,10 +2,7 @@ package ru.centhis.songbook.dropbox;
 
 
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Environment;
 
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
@@ -16,7 +13,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import ru.centhis.songbook.activities.SettingsActivity;
+import ru.centhis.songbook.activities.MainActivity;
 
 public class DownloadFileTask extends AsyncTask<FileMetadata, File, File> {
     private final Context mContext;
@@ -49,7 +46,7 @@ public class DownloadFileTask extends AsyncTask<FileMetadata, File, File> {
         FileMetadata metadata = fileMetadata[0];
         try {
 //            File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File path = new File(SettingsActivity.getFilesDirMethod() + metadata.getPathDisplay()).getParentFile();
+            File path = new File(MainActivity.getFileDir() + metadata.getPathDisplay()).getParentFile();
             File file = new File(path, metadata.getName());
 
             if (!path.exists()){

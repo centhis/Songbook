@@ -9,6 +9,7 @@
     <string name="settings">Настройки</string>
     <string name="scroll_button">Scroll</string>
     <string name="default_song_text_size">Размер шрифта в тексте песни по умочланию</string>
+    <string name="default_show_chord_text">Отображать подсказки для аккордов</string>
     <string name="songs_settings">Настройки песен</string>
     <string name="song_settings">Настройки песни</string>
     <string name="song_text_size">Размер шрифта в тексте песни</string>
@@ -20,4 +21,21 @@
     <string name="yes">Да</string>
     <string name="cancel">Отмена</string>
     <string name="tone">Тональность</string>
+    <string name="find_AmDm">Найти на AmDm</string>
+    <string name="find">Поиск</string>
+    <string name="search_name">Название</string>
+    <string name="search_title">Поиск AmDm</string>
+    <string name="add_song_amdm">Добавить песню</string>
+    <string name="song_saved">Песня добавлена</string>
+    <string name="song_saved_error">Что то пошло не так</string>
+    <string name="add_song_ok_button">Перейти к песне</string>
+    <string name="add_song_cancel_button">Перейти к поиску</string>
+    <string name="add_song_ad_title">Добавление песни</string>
+    <string name="add_song_ad_message">Песня успешно добавлена</string>
+    <string name="text_song_delete_song">Удалить</string>
+    <string name="alert_dialog_delete_song_message_start">Удалить песню\n</string>
+    <string name="alert_dialog_delete_artist_message_start">Удалить артиста\n</string>
+    <string name="alert_dialog_delete_song_message_end">\nУверен?</string>
+    <string name="alert_dialog_delete_song_title">Удаление песни</string>
+    <string name="alert_dialog_delete_artist_title">Удаление артиста</string>
 </resources>

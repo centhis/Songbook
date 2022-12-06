@@ -68,7 +68,7 @@
         android:layout_marginTop="5dp"
         android:layout_marginEnd="5dp"
         android:layout_marginBottom="5dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/textChordsSV"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/controlPanel">
@@ -79,4 +79,25 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" />
     </ScrollView>
+    <HorizontalScrollView
+        android:id="@+id/textChordsSV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/textScrollView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:scrollbars="horizontal">
+        <LinearLayout
+            android:id="@+id/textChordsLL"
+            android:layout_width="50000dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="5dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp">
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

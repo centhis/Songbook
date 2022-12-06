@@ -13,4 +13,9 @@
         android:title="@string/edit"
         android:orderInCategory="150"
         />
+    <item
+        android:id="@+id/action_delete"
+        android:title="@string/text_song_delete_song"
+        android:orderInCategory="200"
+        />
 </menu>

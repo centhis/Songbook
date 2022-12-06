@@ -1,28 +1,21 @@
 package ru.centhis.songbook.activities;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.NavUtils;
-import androidx.core.widget.TextViewCompat;
 
-import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
-import android.graphics.Paint;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.os.Handler;
-import android.text.Html;
 import android.text.Layout;
-import android.text.PrecomputedText;
-import android.text.SpannableString;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -30,40 +23,30 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.centhis.songbook.R;
-import ru.centhis.songbook.data.Chords;
 import ru.centhis.songbook.data.Item;
 import ru.centhis.songbook.data.SettingsContract;
 import ru.centhis.songbook.data.Song;
-import ru.centhis.songbook.data.TestChord;
+import ru.centhis.songbook.util.DeleteSongUtil;
 import ru.centhis.songbook.util.MBJsonSharedPrefs;
 import ru.centhis.songbook.util.TranspondUtil;
 
@@ -92,6 +75,9 @@ public class TextSongActivity extends AppCompatActivity {
     MBJsonSharedPrefs songPrefs;
     int fsSong;
     int transpondSong;
+    Map<String, String> chordsMap = new HashMap<>();
+    LinearLayout textChordsLL;
+
 
     ViewTreeObserver.OnGlobalLayoutListener listener;
 
@@ -108,8 +94,11 @@ public class TextSongActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_text_song);
 
+        chordsMap.put("Am", MainActivity.getChordsDir() + "/Am_0.gif");
+
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        textChordsLL = findViewById(R.id.textChordsLL);
         textSongLayout = findViewById(R.id.textSongLayout);
         playBtn = findViewById(R.id.playBtn);
         scrollBtn = findViewById(R.id.scrollBtn);
@@ -265,28 +254,58 @@ public class TextSongActivity extends AppCompatActivity {
             }
         });
 
+        if (transpondSong > 0)
+            increaseToneBtn.setColorFilter(getResources().getColor(R.color.red));
         increaseToneBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 transpondSong++;
                 if (transpondSong > SettingsContract.TRANSPOND_MAX)
                     transpondSong = SettingsContract.TRANSPOND_MAX;
+                if (transpondSong > 0) {
+                    increaseToneBtn.setColorFilter(getResources().getColor(R.color.red));
+                    decreaseToneBtn.setColorFilter(null);
+                } else if (transpondSong < 0) {
+                    increaseToneBtn.setColorFilter(null);
+                    decreaseToneBtn.setColorFilter(getResources().getColor(R.color.red));
+                } else if (transpondSong == 0){
+                    increaseToneBtn.setColorFilter(null);
+                    decreaseToneBtn.setColorFilter(null);
+                }
                 songPrefs.putInt(SettingsContract.TRANSPOND_SONG, transpondSong);
                 songPrefs.apply();
                 textSongLayout.removeAllViews();
+                textChordsLL.removeAllViews();
+                chordsMap.clear();
                 setTextSongTextView();
             }
         });
 
+        if (transpondSong < 0)
+            decreaseToneBtn.setColorFilter(getResources().getColor(R.color.red));
         decreaseToneBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 transpondSong--;
                 if (transpondSong < SettingsContract.TRANSPOND_MIN)
                     transpondSong = SettingsContract.TRANSPOND_MIN;
+                if (transpondSong > SettingsContract.TRANSPOND_MAX)
+                    transpondSong = SettingsContract.TRANSPOND_MAX;
+                if (transpondSong > 0) {
+                    increaseToneBtn.setColorFilter(getResources().getColor(R.color.red));
+                    decreaseToneBtn.setColorFilter(null);
+                } else if (transpondSong < 0) {
+                    increaseToneBtn.setColorFilter(null);
+                    decreaseToneBtn.setColorFilter(getResources().getColor(R.color.red));
+                } else if (transpondSong == 0){
+                    increaseToneBtn.setColorFilter(null);
+                    decreaseToneBtn.setColorFilter(null);
+                }
                 songPrefs.putInt(SettingsContract.TRANSPOND_SONG, transpondSong);
                 songPrefs.apply();
                 textSongLayout.removeAllViews();
+                textChordsLL.removeAllViews();
+                chordsMap.clear();
                 setTextSongTextView();
             }
         });
@@ -348,6 +367,57 @@ public class TextSongActivity extends AppCompatActivity {
                 Intent openEdit = new Intent(this, EditTextActivity.class);
                 openEdit.putExtra("item", itemRoot);
                 startActivity(openEdit);
+                return true;
+            case R.id.action_delete:
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage(getString(R.string.alert_dialog_delete_song_message_start) + itemRoot.getName() + getString(R.string.alert_dialog_delete_song_message_end)).
+                        setTitle(getString(R.string.alert_dialog_delete_song_title));
+                builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        try {
+                            if (DeleteSongUtil.delete(itemRoot.getSource(), MainActivity.getSongDir().toString(), prefs)){
+                                if (mediaPlayer != null)
+                                    mediaPlayer.stop();
+                                if (scrollCountDownTimer != null) {
+                                    scrollCountDownTimer.cancel();
+                                    scrollCountDownTimer = null;
+                                }
+                                if (startScrollCountDownTimer != null) {
+                                    startScrollCountDownTimer.cancel();
+                                    startScrollCountDownTimer = null;
+                                }
+                                Intent backIntent = new Intent(TextSongActivity.this, MainActivity.class);
+                                startActivity(backIntent);
+                            } else {
+
+                                if (mediaPlayer != null)
+                                    mediaPlayer.stop();
+                                if (scrollCountDownTimer != null) {
+                                    scrollCountDownTimer.cancel();
+                                    scrollCountDownTimer = null;
+                                }
+                                if (startScrollCountDownTimer != null) {
+                                    startScrollCountDownTimer.cancel();
+                                    startScrollCountDownTimer = null;
+                                }
+                                Intent backIntent = new Intent(TextSongActivity.this, ListSongActivity.class);
+                                startActivity(backIntent);
+                            }
+                        } catch (IOException e){
+                            Log.e(TAG, "onOptionsItemSelected: ", e);
+                        }
+                    }
+                });
+                builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                });
+                AlertDialog dialog = builder.create();
+                dialog.show();
+
         }
 
 
@@ -412,26 +482,62 @@ public class TextSongActivity extends AppCompatActivity {
     }
 
     private boolean isChordLine (String line){
-        boolean result = true;
-        line = line.replaceAll("\\p{C}","");
+//        boolean result = true;
+//        line = line.replaceAll("\\p{C}","");
+//        line = line.trim();
+//        String[] words = line.split(" +");
+//        int count = 0;
+//        for (String word:words){
+//            for (Chords chord:Chords.values()){
+//                if (word.equals(chord.toString())){
+//                    count++;
+//                    break;
+//                }
+//            }
+//        }
+//        if (count == words.length)
+//            return true;
+//        return false;
+        line = line.replaceAll("\\p{C}", "");
         line = line.trim();
         String[] words = line.split(" +");
         int count = 0;
-        for (String word:words){
-            for (Chords chord:Chords.values()){
-                if (word.equals(chord.toString())){
-//                    Log.d(TAG, "isChordLine: " + word);
-                    count++;
-                    break;
+        Pattern pattern = Pattern.compile("(\\s*?" + SettingsContract.TONES +
+                SettingsContract.HALF_TONES +
+                SettingsContract.MINOR +
+                SettingsContract.ADDED +
+                SettingsContract.SUS +
+                SettingsContract.ADD +
+                SettingsContract.ENDNOTE +
+                ")");
+        Matcher matcher = pattern.matcher(line);
+
+            while (matcher.find()) {
+                count++;
+                if (songPrefs.getInt(SettingsContract.TRANSPOND_SONG, 0) == 0) {
+                    File chordImg = new File(MainActivity.getChordsDir() + "/" + matcher.group().replaceAll("#", "w").trim() + "_0.gif");
+                    if (chordImg.exists())
+                        chordsMap.put(matcher.group().trim(), chordImg.toString());
                 }
             }
-        }
+
         if (count == words.length)
+            return true;
+        return false;
+
+    }
+
+    private boolean isTabLine (String line){
+        Pattern pattern = Pattern.compile("([\\-\\d\\|]{10,})");
+        Matcher matcher = pattern.matcher(line);
+        if (matcher.find())
             return true;
         return false;
     }
 
     private String[] lineWithBreaks(String line, int count){
+        if (isTabLine(line))
+            return new String[]{line};
         String lineToBreaks = line;
         int lineLength = line.length();
         List<String> linesBreaks = new ArrayList<>();
@@ -452,8 +558,9 @@ public class TextSongActivity extends AppCompatActivity {
 
     private String[] twoLinesWithBreaks(String lineChords, String lineText, int count){
 
-        transponce(lineChords, 1);
-
+//        transponce(lineChords, 1);
+        if (isTabLine(lineText))
+            return new String[]{lineChords, lineText};
         String lineToBreaks = lineText;
         String lineChordsToBreaks = lineChords;
         int lineLength = lineToBreaks.length();
@@ -490,13 +597,13 @@ public class TextSongActivity extends AppCompatActivity {
 
     private void showText(String[] lines, int count){
         for (int i = 0; i < lines.length; i++){
-            if (isChordLine(lines[i])){
+            if (!isTabLine(lines[i]) && isChordLine(lines[i])){
                 if (count + 1 < lines[i + 1].length()){
                     String[] linesBreaks = twoLinesWithBreaks(lines[i], lines[i+1], count);
                     for (String line:linesBreaks){
                         TextView tv = createTextView();
                         String resultLine = line;
-                        if (isChordLine(line)) {
+                        if (!isTabLine(line) && isChordLine(line)) {
                             tv.setTextColor(SettingsContract.CHORDS_COLOR);
                             if (transpondSong != 0)
                                 resultLine = transponce(resultLine, transpondSong);
@@ -508,7 +615,7 @@ public class TextSongActivity extends AppCompatActivity {
                 } else {
                     TextView tv = createTextView();
                     String resultLine = lines[i];
-                    if (isChordLine(lines[i])) {
+                    if (!isTabLine(lines[i]) && isChordLine(lines[i])) {
                         tv.setTextColor(SettingsContract.CHORDS_COLOR);
                         if (transpondSong != 0)
                             resultLine = transponce(resultLine, transpondSong);
@@ -524,7 +631,7 @@ public class TextSongActivity extends AppCompatActivity {
                     for (String line:linesBreaks){
                         TextView tv = createTextView();
                         String resultLine = line;
-                        if (isChordLine(line)) {
+                        if (!isTabLine(line) && isChordLine(line)) {
                             tv.setTextColor(SettingsContract.CHORDS_COLOR);
                             if (transpondSong != 0)
                                 resultLine = transponce(resultLine, transpondSong);
@@ -537,7 +644,7 @@ public class TextSongActivity extends AppCompatActivity {
                 } else {
                     TextView tv = createTextView();
                     String resultLine = lines[i];
-                    if (isChordLine(lines[i])) {
+                    if (!isTabLine(lines[i]) && isChordLine(lines[i])) {
                         tv.setTextColor(SettingsContract.CHORDS_COLOR);
                         if (transpondSong != 0)
                             resultLine = transponce(resultLine, transpondSong);
@@ -547,6 +654,31 @@ public class TextSongActivity extends AppCompatActivity {
                 }
             }
         }
+        if (prefs.getBoolean(SettingsContract.SHOW_CHORDS, Boolean.FALSE)){
+            for(Map.Entry entry:chordsMap.entrySet()){
+                File file = new File(entry.getValue().toString());
+                createImage(file);
+            }
+        }
+    }
+
+    private void createImage(File file){
+        if (file.exists()){
+
+            Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+            ImageView imageView = new ImageView(this);
+            textChordsLL.addView(imageView);
+            imageView.getLayoutParams().height = dpToPx(60);
+            imageView.getLayoutParams().width = dpToPx(60);
+            imageView.setImageBitmap(bitmap);
+
+
+        }
+    }
+
+    public int dpToPx(int dp) {
+        float density = this.getResources().getDisplayMetrics().density;
+        return Math.round((float) dp * density);
     }
 
 //    private String transponce(String line, int steps){
@@ -591,6 +723,7 @@ public class TextSongActivity extends AppCompatActivity {
                 SettingsContract.ADDED +
                 SettingsContract.SUS +
                 SettingsContract.ADD +
+                SettingsContract.ENDNOTE +
                 ")");
         Matcher matcher = pattern.matcher(line);
         StringBuilder sb = new StringBuilder();
@@ -619,6 +752,9 @@ public class TextSongActivity extends AppCompatActivity {
             String resultTone = TranspondUtil.increaseTone(tone);
             chord = chord.replaceAll(tone, resultTone);
         }
+        File chordImg = new File(MainActivity.getChordsDir() + "/" + chord.replaceAll("#", "w") + "_0.gif");
+        if (chordImg.exists())
+            chordsMap.put(chord, chordImg.toString());
         return chord;
     }
 
@@ -630,6 +766,9 @@ public class TextSongActivity extends AppCompatActivity {
             String resultTone = TranspondUtil.decreaseTone(tone);
             chord = chord.replaceAll(tone, resultTone);
         }
+        File chordImg = new File(MainActivity.getChordsDir() + "/" + chord.replaceAll("#", "w") + "_0.gif");
+        if (chordImg.exists())
+            chordsMap.put(chord, chordImg.toString());
         return chord;
     }
 

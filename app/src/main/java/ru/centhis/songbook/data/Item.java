@@ -6,6 +6,9 @@ public class Item implements Comparable<Item>, Serializable {
     private String name;
     private String source;
     private String type;
+    private boolean isMp3;
+    private boolean isGuitar;
+    private boolean isUkulele;
 
     public Item(String name, String source, String type) {
         this.name = name;
@@ -38,6 +41,30 @@ public class Item implements Comparable<Item>, Serializable {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public boolean isMp3() {
+        return isMp3;
+    }
+
+    public void setMp3(boolean mp3) {
+        isMp3 = mp3;
+    }
+
+    public boolean isGuitar() {
+        return isGuitar;
+    }
+
+    public void setGuitar(boolean guitar) {
+        isGuitar = guitar;
+    }
+
+    public boolean isUkulele() {
+        return isUkulele;
+    }
+
+    public void setUkulele(boolean ukulele) {
+        isUkulele = ukulele;
     }
 
     @Override

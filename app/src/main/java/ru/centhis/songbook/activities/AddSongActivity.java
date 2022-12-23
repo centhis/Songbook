@@ -17,15 +17,22 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.apache.commons.io.FilenameUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.Locale;
 
 import ru.centhis.songbook.R;
 import ru.centhis.songbook.data.Item;
@@ -34,6 +41,7 @@ import ru.centhis.songbook.data.SearchSongResult;
 import ru.centhis.songbook.data.SettingsContract;
 import ru.centhis.songbook.parsing.ChordDownloadTask;
 import ru.centhis.songbook.parsing.ParseAmDmTask;
+import ru.centhis.songbook.util.FeedbackEmail;
 
 public class AddSongActivity extends AppCompatActivity {
 
@@ -46,6 +54,7 @@ public class AddSongActivity extends AppCompatActivity {
     String source;
     Context context;
     File fileSongPath;
+    String HTMLSource;
     boolean isTurnToText = false;
 
     @Override
@@ -69,32 +78,73 @@ public class AddSongActivity extends AppCompatActivity {
             dialog.setCancelable(false);
             dialog.setMessage(getString(R.string.loading));
             dialog.show();
-            new ParseAmDmTask(searchSongResult.getHref(), new ParseAmDmTask.Callback() {
-                @Override
-                public void onDataLoaded(ParsedSong result) {
-                    dialog.dismiss();
-                    text = result.getText();
+            if (searchSongResult.getHref().toLowerCase(Locale.ROOT).contains("amdm.ru")) {
+                new ParseAmDmTask(searchSongResult.getHref(), new ParseAmDmTask.Callback() {
+                    @Override
+                    public void onDataLoaded(ParsedSong result) {
+                        dialog.dismiss();
+                        text = result.getText();
 
-                    testFind.setText(result.getText());
-                    for (String url:result.getChordsSrc()){
-                        File file = new File(MainActivity.getChordsDir() + "/" + FilenameUtils.getName(url));
-                        if (!file.exists())
-                            downloadChord(url);
-                        else {
-                            createImage(file);
+                        testFind.setText(result.getText());
+                        for (String url : result.getChordsSrc()) {
+                            File file = new File(MainActivity.getChordsDir() + "/" + FilenameUtils.getName(url));
+                            if (!file.exists())
+                                downloadChord(url);
+                            else {
+                                createImage(file);
+                            }
                         }
                     }
-                }
 
-                @Override
-                public void onError(Exception e) {
-                    dialog.dismiss();
-                    Log.e(TAG, "onError: ", e);
-                }
-            }).execute(searchSongResult.getHref());
-
+                    @Override
+                    public void onError(Exception e) {
+                        dialog.dismiss();
+                        Log.e(TAG, "onError: ", e);
+                    }
+                }).execute(searchSongResult.getHref());
+            } else if (searchSongResult.getHref().toLowerCase(Locale.ROOT).contains("5lad.ru")){
+                WebView addWv = findViewById(R.id.addWv);
+                addWv.getSettings().setJavaScriptEnabled(true);
+                addWv.setWebViewClient(new WebViewClient(){
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        String script = "javascript:window.JS.getHTML" +
+                        "('<html>'+document.getElementsByClassName('textofsong')[0].innerHTML+'</html>');";
+                        addWv.evaluateJavascript(script, null);
+                        int timeoutCount = 0;
+                        while (HTMLSource == null) {
+                            try {
+                                Thread.sleep(500);
+                            } catch (InterruptedException e) {
+                                Log.e(TAG, "onPageFinished: ", e);
+                            }
+                            timeoutCount++;
+                            if (timeoutCount > 10)
+                                break;
+                        }
+                        if (HTMLSource != null){
+                            parce5ladText();
+                            dialog.dismiss();
+                        } else {
+                            dialog.dismiss();
+                            Toast.makeText(context, "Something wrong with html request", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+                addWv.addJavascriptInterface(new JS(this), "JS");
+                addWv.loadUrl(searchSongResult.getHref());
+            }
         }
 
+    }
+
+    private void parce5ladText(){
+        Document document = Jsoup.parse(HTMLSource);
+        Element element = document.firstElementChild();
+        if (element != null){
+            text = element.wholeText();
+            testFind.setText(text);
+        }
     }
 
     private void downloadChord(String url){
@@ -137,7 +187,7 @@ public class AddSongActivity extends AppCompatActivity {
                 this.finish();
                 return true;
             case R.id.add_song_AmDm:
-                boolean isSuccess = saveSong(searchSongResult.getArtistName(), searchSongResult.getSongName(), text);
+                boolean isSuccess = saveSong(searchSongResult.getArtistName().replace("/", ""), searchSongResult.getSongName().replace("/", ""), text);
 
                 if (isSuccess) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -163,6 +213,7 @@ public class AddSongActivity extends AppCompatActivity {
                     AlertDialog dialog = builder.create();
                     dialog.show();
                 } else
+
                     Toast.makeText(this, getString(R.string.song_saved_error), Toast.LENGTH_LONG).show();
                 return true;
             default:
@@ -180,6 +231,8 @@ public class AddSongActivity extends AppCompatActivity {
 
     public boolean saveSong(String artist, String songName, String text){
         File filePath = MainActivity.getSongDir();
+        if (!filePath.exists())
+            filePath.mkdir();
         File fileArtistPath = new File(filePath + "/" + artist);
         if (!fileArtistPath.exists())
             fileArtistPath.mkdir();
@@ -192,7 +245,21 @@ public class AddSongActivity extends AppCompatActivity {
             return true;
         } catch (Exception e){
             Log.e(TAG, "saveSong: ", e);
+            new FeedbackEmail(this).setSubject("Songbook error").setContent("saveSong: " + e.toString()).build().send();
             return false;
+        }
+    }
+
+    class JS {
+        private Context context;
+
+        public JS(Context context){
+            this.context = context;
+        }
+
+        @JavascriptInterface
+        public void getHTML(String html){
+            HTMLSource = html;
         }
     }
 }

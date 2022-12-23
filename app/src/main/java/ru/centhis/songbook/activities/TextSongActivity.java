@@ -46,6 +46,7 @@ import ru.centhis.songbook.R;
 import ru.centhis.songbook.data.Item;
 import ru.centhis.songbook.data.SettingsContract;
 import ru.centhis.songbook.data.Song;
+import ru.centhis.songbook.parsing.UkuleleChordDownloadTask;
 import ru.centhis.songbook.util.DeleteSongUtil;
 import ru.centhis.songbook.util.MBJsonSharedPrefs;
 import ru.centhis.songbook.util.TranspondUtil;
@@ -61,6 +62,7 @@ public class TextSongActivity extends AppCompatActivity {
     LinearLayout textSongLayout;
     static int count;
     Song song;
+    String songVersion;
     ImageButton playBtn;
     ImageButton scrollBtn;
     ImageButton fsUpBtn;
@@ -94,8 +96,6 @@ public class TextSongActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_text_song);
 
-        chordsMap.put("Am", MainActivity.getChordsDir() + "/Am_0.gif");
-
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         textChordsLL = findViewById(R.id.textChordsLL);
@@ -112,6 +112,9 @@ public class TextSongActivity extends AppCompatActivity {
         if (getIntent().getExtras() != null){
             itemRoot = (Item) getIntent().getSerializableExtra("item");
             setTitle(itemRoot.getName());
+            songVersion = getIntent().getStringExtra(SettingsContract.SONG_VERSION);
+            if (songVersion == null)
+                songVersion = SettingsContract.SONG_EDIT_VERSION_GUITAR;
         }
 
         songPrefs = new MBJsonSharedPrefs(itemRoot.getSource() + "/songPrefs.json");
@@ -135,8 +138,10 @@ public class TextSongActivity extends AppCompatActivity {
         } else {
             mediaPlayer = MediaPlayer.create(this, Uri.parse(itemRoot.getSource() + "/" + mp3));
         }
-
-        song = new Song(itemRoot.getSource() + "/" + file);
+        if (songVersion.equals(SettingsContract.SONG_VERSION_GUITAR))
+            song = new Song(itemRoot.getSource() + "/" + SettingsContract.GUITAR_TEXT_FILE);
+        else if (songVersion.equals(SettingsContract.SONG_VERSION_UKULELE))
+            song = new Song(itemRoot.getSource() + "/" + SettingsContract.UKULELE_TEXT_FILE);
 
 
 
@@ -176,15 +181,16 @@ public class TextSongActivity extends AppCompatActivity {
                     int svHeight = sv.getChildAt(0).getHeight();
                     int duration = mediaPlayer.getDuration();
                     int svScreeHeight = sv.getHeight();
+                    int scrollSpeed = songPrefs.getInt(SettingsContract.SCROLL_SONG, 0);
 
 
-                    scrollCountDownTimer = new CountDownTimer(duration, duration / 10000) {
+                    scrollCountDownTimer = new CountDownTimer(duration, (duration + (scrollSpeed * 1000)) / 10000) {
                         double svPosition = 0;
 
                         @Override
                         public void onTick(long l) {
-                            int scrollSpeed = songPrefs.getInt(SettingsContract.SCROLL_SONG, 0);
-                            svPosition = svPosition + (svHeight / (10000.0 + (scrollSpeed * 1000)));
+
+                            svPosition = svPosition + (svHeight / 10000.0);
                             sv.scrollTo(0, (int) svPosition);
                             if (svPosition > (svHeight - svScreeHeight))
                                 scrollCountDownTimer.cancel();
@@ -311,6 +317,18 @@ public class TextSongActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem actionAddUkuleleVersion = menu.findItem(R.id.action_add_ukulele_version);
+        MenuItem actionSwitchUkuleleVersion = menu.findItem(R.id.actionSwitchInstrument);
+        if (itemRoot.isUkulele()) {
+            actionAddUkuleleVersion.setTitle(getString(R.string.edit_ukulele_version));
+            actionSwitchUkuleleVersion.setVisible(true);
+        }
+        if (songVersion.equals(SettingsContract.SONG_VERSION_UKULELE))
+            actionSwitchUkuleleVersion.setTitle(getString(R.string.guitar));
+        return super.onPrepareOptionsMenu(menu);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -324,49 +342,44 @@ public class TextSongActivity extends AppCompatActivity {
 
         switch (item.getItemId()){
             case android.R.id.home:
-                if (mediaPlayer != null)
-                    mediaPlayer.stop();
-                if (scrollCountDownTimer != null) {
-                    scrollCountDownTimer.cancel();
-                    scrollCountDownTimer = null;
-                }
-                if (startScrollCountDownTimer != null) {
-                    startScrollCountDownTimer.cancel();
-                    startScrollCountDownTimer = null;
-                }
-//                NavUtils.navigateUpFromSameTask(this);
+                stopActivity();
                 Intent backIntent = new Intent(this, ListSongActivity.class);
+                Item backItem = new Item();
+                backItem.setType("folder");
+                backItem.setName(prefs.getString(SettingsContract.CURRENT_AUTHOR, null));
+                backItem.setSource(new File(itemRoot.getSource()).getParent().toString());
+                backIntent.putExtra("item", backItem);
                 startActivity(backIntent);
                 return true;
             case R.id.action_song_settings:
-                if (mediaPlayer != null)
-                    mediaPlayer.stop();
-                if (scrollCountDownTimer != null) {
-                    scrollCountDownTimer.cancel();
-                    scrollCountDownTimer = null;
-                }
-                if (startScrollCountDownTimer != null) {
-                    startScrollCountDownTimer.cancel();
-                    startScrollCountDownTimer = null;
-                }
+                stopActivity();
                 Intent openSettings = new Intent(this, SettingsSongActivity.class);
                 openSettings.putExtra("item", itemRoot);
                 startActivity(openSettings);
                 return true;
+            case R.id.actionSwitchInstrument:
+                stopActivity();
+                Intent openSong = new Intent(this, TextSongActivity.class);
+                if (songVersion.equals(SettingsContract.SONG_VERSION_GUITAR))
+                    openSong.putExtra(SettingsContract.SONG_VERSION, SettingsContract.SONG_EDIT_VERSION_UKULELE);
+                else
+                    openSong.putExtra(SettingsContract.SONG_VERSION, SettingsContract.SONG_EDIT_VERSION_GUITAR);
+                openSong.putExtra("item", itemRoot);
+                startActivity(openSong);
+                return true;
             case R.id.action_edit:
-                if (mediaPlayer != null)
-                    mediaPlayer.stop();
-                if (scrollCountDownTimer != null) {
-                    scrollCountDownTimer.cancel();
-                    scrollCountDownTimer = null;
-                }
-                if (startScrollCountDownTimer != null) {
-                    startScrollCountDownTimer.cancel();
-                    startScrollCountDownTimer = null;
-                }
+                stopActivity();
                 Intent openEdit = new Intent(this, EditTextActivity.class);
                 openEdit.putExtra("item", itemRoot);
+                openEdit.putExtra(SettingsContract.SONG_EDIT_VERSION, SettingsContract.SONG_EDIT_VERSION_GUITAR);
                 startActivity(openEdit);
+                return true;
+            case R.id.action_add_ukulele_version:
+                stopActivity();
+                Intent openUkuleleEdit = new Intent(this, EditTextActivity.class);
+                openUkuleleEdit.putExtra("item", itemRoot);
+                openUkuleleEdit.putExtra(SettingsContract.SONG_EDIT_VERSION, SettingsContract.SONG_EDIT_VERSION_UKULELE);
+                startActivity(openUkuleleEdit);
                 return true;
             case R.id.action_delete:
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -377,30 +390,11 @@ public class TextSongActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         try {
                             if (DeleteSongUtil.delete(itemRoot.getSource(), MainActivity.getSongDir().toString(), prefs)){
-                                if (mediaPlayer != null)
-                                    mediaPlayer.stop();
-                                if (scrollCountDownTimer != null) {
-                                    scrollCountDownTimer.cancel();
-                                    scrollCountDownTimer = null;
-                                }
-                                if (startScrollCountDownTimer != null) {
-                                    startScrollCountDownTimer.cancel();
-                                    startScrollCountDownTimer = null;
-                                }
+                                stopActivity();
                                 Intent backIntent = new Intent(TextSongActivity.this, MainActivity.class);
                                 startActivity(backIntent);
                             } else {
-
-                                if (mediaPlayer != null)
-                                    mediaPlayer.stop();
-                                if (scrollCountDownTimer != null) {
-                                    scrollCountDownTimer.cancel();
-                                    scrollCountDownTimer = null;
-                                }
-                                if (startScrollCountDownTimer != null) {
-                                    startScrollCountDownTimer.cancel();
-                                    startScrollCountDownTimer = null;
-                                }
+                                stopActivity();
                                 Intent backIntent = new Intent(TextSongActivity.this, ListSongActivity.class);
                                 startActivity(backIntent);
                             }
@@ -420,14 +414,20 @@ public class TextSongActivity extends AppCompatActivity {
 
         }
 
-
-//        int id = item.getItemId();
-//        if (id == R.id.action_settings){
-//            Intent openSettings = new Intent(this, SettingsActivity.class);
-//            startActivity(openSettings);
-//            return true;
-//        }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void stopActivity(){
+        if (mediaPlayer != null)
+            mediaPlayer.stop();
+        if (scrollCountDownTimer != null) {
+            scrollCountDownTimer.cancel();
+            scrollCountDownTimer = null;
+        }
+        if (startScrollCountDownTimer != null) {
+            startScrollCountDownTimer.cancel();
+            startScrollCountDownTimer = null;
+        }
     }
 
 
@@ -481,185 +481,48 @@ public class TextSongActivity extends AppCompatActivity {
         });
     }
 
-    private boolean isChordLine (String line){
-//        boolean result = true;
-//        line = line.replaceAll("\\p{C}","");
-//        line = line.trim();
-//        String[] words = line.split(" +");
-//        int count = 0;
-//        for (String word:words){
-//            for (Chords chord:Chords.values()){
-//                if (word.equals(chord.toString())){
-//                    count++;
-//                    break;
-//                }
-//            }
-//        }
-//        if (count == words.length)
-//            return true;
-//        return false;
-        line = line.replaceAll("\\p{C}", "");
-        line = line.trim();
-        String[] words = line.split(" +");
-        int count = 0;
-        Pattern pattern = Pattern.compile("(\\s*?" + SettingsContract.TONES +
-                SettingsContract.HALF_TONES +
-                SettingsContract.MINOR +
-                SettingsContract.ADDED +
-                SettingsContract.SUS +
-                SettingsContract.ADD +
-                SettingsContract.ENDNOTE +
-                ")");
-        Matcher matcher = pattern.matcher(line);
-
-            while (matcher.find()) {
-                count++;
-                if (songPrefs.getInt(SettingsContract.TRANSPOND_SONG, 0) == 0) {
-                    File chordImg = new File(MainActivity.getChordsDir() + "/" + matcher.group().replaceAll("#", "w").trim() + "_0.gif");
-                    if (chordImg.exists())
-                        chordsMap.put(matcher.group().trim(), chordImg.toString());
-                }
-            }
-
-        if (count == words.length)
-            return true;
-        return false;
-
-    }
-
-    private boolean isTabLine (String line){
-        Pattern pattern = Pattern.compile("([\\-\\d\\|]{10,})");
-        Matcher matcher = pattern.matcher(line);
-        if (matcher.find())
-            return true;
-        return false;
-    }
-
-    private String[] lineWithBreaks(String line, int count){
-        if (isTabLine(line))
-            return new String[]{line};
-        String lineToBreaks = line;
-        int lineLength = line.length();
-        List<String> linesBreaks = new ArrayList<>();
-        while (count < lineLength){
-            for (int i = count; i > 1; i--){
-                if (lineToBreaks.charAt(i) == ' '){
-                    linesBreaks.add(lineToBreaks.substring(0, i));
-                    lineToBreaks = lineToBreaks.substring(i);
-                    lineLength = lineToBreaks.length();
-                    break;
-                }
-            }
-        }
-        if (lineToBreaks.length() > 0)
-            linesBreaks.add(lineToBreaks);
-        return linesBreaks.toArray(new String[linesBreaks.size()]);
-    }
-
-    private String[] twoLinesWithBreaks(String lineChords, String lineText, int count){
-
-//        transponce(lineChords, 1);
-        if (isTabLine(lineText))
-            return new String[]{lineChords, lineText};
-        String lineToBreaks = lineText;
-        String lineChordsToBreaks = lineChords;
-        int lineLength = lineToBreaks.length();
-        List<String> linesBreaks = new ArrayList<>();
-        while (count < lineLength){
-            for (int i = count; i > 1; i--){
-                if (lineToBreaks.charAt(i) == ' '){
-                    if (lineChordsToBreaks.length() <= i)
-                        linesBreaks.add(lineChordsToBreaks);
-                    if (lineChordsToBreaks.length() > i)
-                        linesBreaks.add(lineChordsToBreaks.substring(0, i));
-//                    else if (lineChordsToBreaks.length() < i)
-//                        linesBreaks.add(lineChordsToBreaks);
-//                    else if (lineChordsToBreaks.length() != i)
-//                        linesBreaks.add(" ");
-                    linesBreaks.add(lineToBreaks.substring(0, i));
-                    if (lineChordsToBreaks.length() > i)
-                        lineChordsToBreaks = lineChordsToBreaks.substring(i);
-                    else
-                        lineChordsToBreaks = "";
-                    lineToBreaks = lineToBreaks.substring(i);
-                    lineLength = lineToBreaks.length();
-                    break;
-                }
-            }
-        }
-        if (lineChordsToBreaks.length() > 0)
-            linesBreaks.add(lineChordsToBreaks);
-        if (lineToBreaks.length() > 0)
-            linesBreaks.add(lineToBreaks);
-        return linesBreaks.toArray(new String[linesBreaks.size()]);
-
-    }
 
     private void showText(String[] lines, int count){
-        for (int i = 0; i < lines.length; i++){
-            if (!isTabLine(lines[i]) && isChordLine(lines[i])){
-                if (count + 1 < lines[i + 1].length()){
-                    String[] linesBreaks = twoLinesWithBreaks(lines[i], lines[i+1], count);
-                    for (String line:linesBreaks){
-                        TextView tv = createTextView();
-                        String resultLine = line;
-                        if (!isTabLine(line) && isChordLine(line)) {
-                            tv.setTextColor(SettingsContract.CHORDS_COLOR);
-                            if (transpondSong != 0)
-                                resultLine = transponce(resultLine, transpondSong);
-                        }
-                        tv.setText(resultLine);
-
-                    }
-                    i++;
-                } else {
-                    TextView tv = createTextView();
-                    String resultLine = lines[i];
-                    if (!isTabLine(lines[i]) && isChordLine(lines[i])) {
-                        tv.setTextColor(SettingsContract.CHORDS_COLOR);
-                        if (transpondSong != 0)
-                            resultLine = transponce(resultLine, transpondSong);
-                    }
-                    tv.setText(resultLine);
-
-                }
-            } else {
-                if (count + 1 < lines[i].length()){
-                    String[] linesBreaks = lineWithBreaks(lines[i], count);
-
-
-                    for (String line:linesBreaks){
-                        TextView tv = createTextView();
-                        String resultLine = line;
-                        if (!isTabLine(line) && isChordLine(line)) {
-                            tv.setTextColor(SettingsContract.CHORDS_COLOR);
-                            if (transpondSong != 0)
-                                resultLine = transponce(resultLine, transpondSong);
-                        }
-                        tv.setText(resultLine);
-
-                    }
-
-
-                } else {
-                    TextView tv = createTextView();
-                    String resultLine = lines[i];
-                    if (!isTabLine(lines[i]) && isChordLine(lines[i])) {
-                        tv.setTextColor(SettingsContract.CHORDS_COLOR);
-                        if (transpondSong != 0)
-                            resultLine = transponce(resultLine, transpondSong);
-                    }
-                    tv.setText(resultLine);
-
-                }
-            }
+        String[][] songText = song.getSongTextWithBreaks(count, transpondSong);
+        for (int i = 0; i < songText.length; i++){
+            TextView tv = createTextView();
+            if (songText[i][1].equals("chord"))
+                tv.setTextColor(SettingsContract.CHORDS_COLOR);
+            tv.setText(songText[i][0]);
         }
         if (prefs.getBoolean(SettingsContract.SHOW_CHORDS, Boolean.FALSE)){
-            for(Map.Entry entry:chordsMap.entrySet()){
-                File file = new File(entry.getValue().toString());
-                createImage(file);
+            List<String> chords = song.getChords(transpondSong);
+            if (songVersion.equals(SettingsContract.SONG_VERSION_GUITAR)) {
+                for (String chord : chords) {
+                    File file = new File(MainActivity.getChordsDir() + "/" + chord.replaceAll("#", "w") + "_0.gif");
+                    createImage(file);
+                }
+            }
+            else if (songVersion.equals(SettingsContract.SONG_VERSION_UKULELE)){
+                for (String chord:chords){
+                    File file = new File(MainActivity.getUkuleleChordsDir() + "/" + chord.replaceAll("#", "w") + ".png");
+                    if (!file.exists()){
+                        String url = "https://ukula.ru/newchords/" + chord.replaceAll("#", "w") + ".png";
+                        new UkuleleChordDownloadTask(url, new UkuleleChordDownloadTask.Callback() {
+                            @Override
+                            public void onDataLoaded(File result) {
+                                createImage(result);
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                Log.e(TAG, "onError: ", e);
+                            }
+                        }).execute(url);
+                    } else {
+                        createImage(file);
+                    }
+                }
             }
         }
+
+
+
     }
 
     private void createImage(File file){
@@ -681,96 +544,10 @@ public class TextSongActivity extends AppCompatActivity {
         return Math.round((float) dp * density);
     }
 
-//    private String transponce(String line, int steps){
-//        line = line.replaceAll("\\p{C}","");
-//        Pattern pattern = Pattern.compile("(\\s*?\\S+)");
-//        Matcher matcher = pattern.matcher(line);
-//        StringBuilder sb = new StringBuilder();
-//        while (matcher.find()){
-//            String chordWidthSpaces = line.substring(matcher.start(), matcher.end());
-//            String chordString = chordWidthSpaces.trim();
-//            TestChord chord = TestChord.valueOf(chordString);
-//            Pattern chordPattern = Pattern.compile(SettingsContract.TONES +
-//                    SettingsContract.HALF_TONES +
-//                    SettingsContract.MINOR +
-//                    SettingsContract.ADDED +
-//                    SettingsContract.SUS +
-//                    SettingsContract.ADD);
-//            Matcher chordMatcher = chordPattern.matcher(chordString);
-//            while (chordMatcher.find()){
-//                Log.d(TAG, "transponce: " + chordString.substring(chordMatcher.start(), chordMatcher.end()));
-//            }
-//
-//            for (int i = 0; i < Math.abs(steps); i++){
-//                if (steps > 0)
-//                    chord = chord.getIncreaseChord();
-//                else if (steps < 0){
-//                    chord = chord.getDecreaseChord();
-//                }
-//            }
-//            chordWidthSpaces = chordWidthSpaces.replaceAll(chordString, chord.toString());
-//            sb.append(chordWidthSpaces);
-////            Log.d(TAG, "transponce: " + sb.toString());
-//        }
-//        return null;
-//    }
 
-    private String transponce(String line, int steps){
-        line = line.replaceAll("\\p{C}", "");
-        Pattern pattern = Pattern.compile("(\\s*?" + SettingsContract.TONES +
-                SettingsContract.HALF_TONES +
-                SettingsContract.MINOR +
-                SettingsContract.ADDED +
-                SettingsContract.SUS +
-                SettingsContract.ADD +
-                SettingsContract.ENDNOTE +
-                ")");
-        Matcher matcher = pattern.matcher(line);
-        StringBuilder sb = new StringBuilder();
-        while (matcher.find()){
-            String chordWidthSpaces = line.substring(matcher.start(), matcher.end());
-            String originalChord = chordWidthSpaces.trim();
-            String chord = originalChord;
-            for (int i = 0; i < Math.abs(steps); i++){
-                if (steps > 0)
-                    chord = increaseChordTone(chord);
-                else if (steps < 0)
-                    chord = decreaseChordTone(chord);
-            }
-            chordWidthSpaces = chordWidthSpaces.replaceAll(originalChord, chord);
-            sb.append(chordWidthSpaces);
-        }
-        Log.d(TAG, "transponce: " + sb.toString());
-        return sb.toString();
-    }
 
-    private String increaseChordTone (String chord){
-        Pattern pattern = Pattern.compile(SettingsContract.TONES + SettingsContract.HALF_TONES);
-        Matcher matcher = pattern.matcher(chord);
-        while (matcher.find()){
-            String tone = chord.substring(matcher.start(), matcher.end());
-            String resultTone = TranspondUtil.increaseTone(tone);
-            chord = chord.replaceAll(tone, resultTone);
-        }
-        File chordImg = new File(MainActivity.getChordsDir() + "/" + chord.replaceAll("#", "w") + "_0.gif");
-        if (chordImg.exists())
-            chordsMap.put(chord, chordImg.toString());
-        return chord;
-    }
 
-    private String decreaseChordTone (String chord){
-        Pattern pattern = Pattern.compile(SettingsContract.TONES + SettingsContract.HALF_TONES);
-        Matcher matcher = pattern.matcher(chord);
-        while (matcher.find()){
-            String tone = chord.substring(matcher.start(), matcher.end());
-            String resultTone = TranspondUtil.decreaseTone(tone);
-            chord = chord.replaceAll(tone, resultTone);
-        }
-        File chordImg = new File(MainActivity.getChordsDir() + "/" + chord.replaceAll("#", "w") + "_0.gif");
-        if (chordImg.exists())
-            chordsMap.put(chord, chordImg.toString());
-        return chord;
-    }
+
 
 
 }

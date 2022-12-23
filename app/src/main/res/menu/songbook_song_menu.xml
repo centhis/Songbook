@@ -9,9 +9,20 @@
         app:showAsAction="always"
         android:icon="@drawable/ic_baseline_settings_24"/>
     <item
+        android:id="@+id/actionSwitchInstrument"
+        android:title="@string/switch_ukulele"
+        android:orderInCategory="140"
+        android:visible="false"
+        />
+    <item
         android:id="@+id/action_edit"
         android:title="@string/edit"
         android:orderInCategory="150"
+        />
+    <item
+        android:id="@+id/action_add_ukulele_version"
+        android:title="@string/add_ukulele_version"
+        android:orderInCategory="160"
         />
     <item
         android:id="@+id/action_delete"

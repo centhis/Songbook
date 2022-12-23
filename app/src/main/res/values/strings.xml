@@ -13,15 +13,17 @@
     <string name="songs_settings">Настройки песен</string>
     <string name="song_settings">Настройки песни</string>
     <string name="song_text_size">Размер шрифта в тексте песни</string>
-    <string name="song_scroll_speed">Корректировка скорости прокрутки</string>
-    <string name="song_scroll_count_down">Задержка прокрутки, сек</string>
+    <string name="song_scroll_speed">Корректировка длительности песни, сек\n+ замедлить скроллинг\n- ускорить скроллинг</string>
+    <string name="song_scroll_count_down">Задержка перед скроллингом, сек</string>
     <string name="edit">Редактировать</string>
     <string name="editing">Редактирование</string>
     <string name="save_question">Сохранить?</string>
     <string name="yes">Да</string>
     <string name="cancel">Отмена</string>
     <string name="tone">Тональность</string>
-    <string name="find_AmDm">Найти на AmDm</string>
+    <string name="find_AmDm">Найти на AmDm.ru</string>
+    <string name="find_5lad">Найти на 5lad.ru</string>
+    <string name="find_ukula">Найти на ukula.ru</string>
     <string name="find">Поиск</string>
     <string name="search_name">Название</string>
     <string name="search_title">Поиск AmDm</string>
@@ -38,4 +40,10 @@
     <string name="alert_dialog_delete_song_message_end">\nУверен?</string>
     <string name="alert_dialog_delete_song_title">Удаление песни</string>
     <string name="alert_dialog_delete_artist_title">Удаление артиста</string>
+    <string name="add_ukulele_version">Добавить Укулеле версию</string>
+    <string name="edit_ukulele_version">Редактировать Укулеле версию</string>
+    <string name="guitar">Гитара</string>
+    <string name="ukulele">Укулуеле</string>
+    <string name="switch_ukulele">Укулеле</string>
+    <string name="switch_guitar">Гитара</string>
 </resources>

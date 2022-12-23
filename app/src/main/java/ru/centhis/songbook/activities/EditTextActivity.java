@@ -8,9 +8,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.EditText;
 
+
+import java.io.File;
+import java.io.IOException;
 
 import ru.centhis.songbook.R;
 import ru.centhis.songbook.data.Item;
@@ -19,10 +23,13 @@ import ru.centhis.songbook.data.Song;
 
 public class EditTextActivity extends AppCompatActivity {
 
+    private static final String TAG = MainActivity.class.getName();
+
     Item itemRoot;
     EditText editText;
     Song song;
     String file;
+    String version;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,10 +41,32 @@ public class EditTextActivity extends AppCompatActivity {
 
         if (getIntent().getExtras() != null){
             itemRoot = (Item) getIntent().getSerializableExtra("item");
-            setTitle(itemRoot.getName() + " - " + getString(R.string.editing));
-            file = "text.txt";
-            song = new Song(itemRoot.getSource() + "/" + file);
-            editText.setText(getTextFromFile(song));
+            version = getIntent().getStringExtra(SettingsContract.SONG_EDIT_VERSION);
+            if (version.equals(SettingsContract.SONG_EDIT_VERSION_UKULELE)){
+                setTitle(getString(R.string.ukulele));
+                file = SettingsContract.UKULELE_TEXT_FILE;
+                File ukuleleFile = new File(itemRoot.getSource() + "/" + file);
+                if (ukuleleFile.exists()){
+                    song = new Song(itemRoot.getSource() + "/" + file);
+                    editText.setText(getTextFromFile(song));
+                } else {
+                    song = new Song(itemRoot.getSource() + "/" + SettingsContract.GUITAR_TEXT_FILE);
+                    editText.setText(getTextFromFile(song));
+                    try {
+                        ukuleleFile.createNewFile();
+                    } catch (IOException e){
+                        Log.e(TAG, "onCreate: ", e);
+                    }
+
+                    song = new Song(itemRoot.getSource() + "/" + file);
+                }
+            } else if (version.equals(SettingsContract.SONG_EDIT_VERSION_GUITAR)){
+                setTitle(getString(R.string.guitar));
+                file = SettingsContract.GUITAR_TEXT_FILE;
+                song = new Song(itemRoot.getSource() + "/" + file);
+                editText.setText(getTextFromFile(song));
+            }
+
         }
 
         ActionBar actionBar = this.getSupportActionBar();

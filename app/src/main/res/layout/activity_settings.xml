@@ -128,7 +128,7 @@
                 android:id="@+id/defaultScrollCountDownTextView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:text="@string/default_song_text_size"
+                android:text="@string/song_scroll_count_down"
                 android:layout_marginEnd="20dp"
                 android:textSize="16sp"
                 android:gravity="center"

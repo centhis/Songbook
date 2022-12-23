@@ -13,4 +13,9 @@
         android:title="@string/find_AmDm"
         android:orderInCategory="120"
         app:showAsAction="never"/>
+    <item
+        android:id="@+id/find_5lad"
+        android:title="@string/find_5lad"
+        android:orderInCategory="121"
+        app:showAsAction="never"/>
 </menu>

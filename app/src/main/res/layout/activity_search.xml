@@ -58,5 +58,9 @@
             android:id="@+id/search_list"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
     </LinearLayout>
+    <WebView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:id="@+id/searchWV"/>
 
 </LinearLayout>

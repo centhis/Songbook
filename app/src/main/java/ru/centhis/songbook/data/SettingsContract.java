@@ -19,11 +19,21 @@ public class SettingsContract {
     public static final int SCROLL_COUNTDOWN_MIN = 1;
     public static final int SCROLL_COUNTDOWN_MAX = 99;
     public static final String SCROLL_COUNTDOWN = "scrollCountDown";
-    public static final String GUITAR_TEXT_FILE = "guitar.txt";
+    public static final String GUITAR_TEXT_FILE = "text.txt";
     public static final String UKULELE_TEXT_FILE = "ukulele.txt";
     public static final int CHORDS_COLOR = Color.RED;
     public static final String SONGS_TO_DELETE = "songsToDelete";
     public static final String SHOW_CHORDS = "showChords";
+    public static final String FIND_AMDM = "AmDm";
+    public static final String FIND_5LAD = "5lad";
+    public static final String FIND_UKULA = "ukula";
+    public static final String SONG_SEARCH_SITE = "songSearchSite";
+    public static final String SONG_EDIT_VERSION = "songEditVersion";
+    public static final String SONG_EDIT_VERSION_GUITAR = "guitar";
+    public static final String SONG_EDIT_VERSION_UKULELE = "ukulele";
+    public static final String SONG_VERSION_UKULELE = "ukulele";
+    public static final String SONG_VERSION_GUITAR = "guitar";
+    public static final String SONG_VERSION = "songVersion";
 
 
     //chords
@@ -34,4 +44,7 @@ public class SettingsContract {
     public static final String SUS = "[sus2sus4dim]*+";
     public static final String ADD = "[add9]*+";
     public static final String ENDNOTE = "[\\*]*+";
+
+    //Logs
+    public static final String LOG_EMAIL = "centhisone@gmail.com";
 }
